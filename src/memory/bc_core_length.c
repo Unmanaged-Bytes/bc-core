@@ -76,7 +76,7 @@ __attribute__((constructor)) void bc_core_length_dispatch_init(void)
 
 bool bc_core_length(const void* data, unsigned char terminator, size_t* out_length)
 {
-#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
+#if defined(__SANITIZE_ADDRESS__)
     const unsigned char* ptr = (const unsigned char*)data;
     size_t length = 0;
     while (ptr[length] != terminator) {
