@@ -1,0 +1,26 @@
+Source: libbc-core
+Section: libdevel
+Priority: optional
+Maintainer: Younes Benmoussa <younes.benmoussa@pm.me>
+Build-Depends: debhelper-compat (= 13),
+               meson (>= 1.0),
+               ninja-build,
+               pkg-config,
+               libcmocka-dev
+Standards-Version: 4.6.2
+Homepage: https://unmanaged-bytes.com/
+Vcs-Git: https://github.com/Unmanaged-Bytes/bc-core.git
+Vcs-Browser: https://github.com/Unmanaged-Bytes/bc-core
+
+Package: libbc-core-dev
+Architecture: amd64
+Multi-Arch: same
+Depends: ${misc:Depends}
+Description: bc-* ecosystem core C primitives (development files)
+ Cache-line-aware memory helpers, SIMD-accelerated byte search,
+ integer-safe math with overflow checks, and CPU-dispatched hash
+ primitives (SHA-256 with SHA-NI fast path, CRC32C via SSE4.2).
+ The foundation every other bc-* library builds on.
+ .
+ This package ships the static library, public headers, and
+ pkg-config descriptor required to build against bc-core.

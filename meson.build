@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: MIT
+
+project('bc-core', 'c',
+  version : '1.0.0',
+  license : 'MIT',
+  default_options : [
+    'c_std=c11',
+    'warning_level=3',
+    'werror=true',
+    'optimization=3',
+    'default_library=static',
+  ],
+)
+
+cc = meson.get_compiler('c')
+
+extra_c_args = [
+  '-pedantic',
+  '-Wconversion',
+  '-Wshadow',
+  '-Wformat=2',
+]
+
+extra_c_args += '-D_GNU_SOURCE'
+
+foreach arg : extra_c_args
+  if cc.has_argument(arg)
+    add_project_arguments(arg, language : 'c')
+  endif
+endforeach
+
+lto_c_args = []
+lto_link_args = []
+if get_option('buildtype') in ['release', 'minsize']
+  arch_value = get_option('arch')
+  if arch_value == ''
+    arch_value = 'x86-64-v2'
+  endif
+
+  add_project_arguments(
+    '-march=' + arch_value,
+    '-funroll-loops',
+    '-fomit-frame-pointer',
+    '-ffunction-sections',
+    '-fdata-sections',
+    language : 'c',
+  )
+  add_project_link_arguments('-Wl,--gc-sections', language : 'c')
+endif
+
+pkg = import('pkgconfig')
+
+bc_core_public_inc = include_directories('include/public')
+bc_core_internal_inc = include_directories('include/internal')
+
+subdir('src')
+
+pkg.generate(
+  bc_core_lib,
+  name : 'bc-core',
+  description : 'Core CPU primitives (hash, memory SIMD, math, cache-line)',
+  version : meson.project_version(),
+  extra_cflags : ['-I${includedir}/bc'],
+)
+
+install_headers(
+  'include/public/bc_core.h',
+  'include/public/bc_core_cpu.h',
+  'include/public/bc_core_hash.h',
+  'include/public/bc_core_math.h',
+  'include/public/bc_core_memory.h',
+  subdir : 'bc',
+)
+
+if get_option('tests')
+  subdir('tests')
+endif
+
+if get_option('benchmarks')
+  subdir('benchmarks')
+endif
+
+if get_option('fuzzing')
+  subdir('fuzzing')
+endif

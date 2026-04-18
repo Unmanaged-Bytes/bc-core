@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: MIT
+//
+// False-positive unusedFunction suppressions for bc-core.
+//
+// cppcheck only sees the bc-core source tree, so every public function
+// exported to bc-allocators / bc-io / bc-concurrency / bc-runtime or to
+// external callers is reported as unused. Suppress per-file rather than
+// globally so that a genuinely dead helper inside bc-core itself still
+// trips the check.
+//
+// Also suppresses the static x86-guarded helpers in bc_core_hash_sha256
+// whose callers cppcheck hides behind #if __x86_64__.
+
+// --- x86-guarded static helpers ---
+unusedFunction:*/hash/bc_core_hash_sha256.c
+
+// --- Public API exported for downstream libs; callers live outside bc-core ---
+unusedFunction:*/cpu/bc_core_cpu.c
+unusedFunction:*/cpu/bc_core_cpu_prefetch.c
+unusedFunction:*/cpu/bc_core_cache_sizes.c
+unusedFunction:*/hash/bc_core_hash_crc32c.c
+unusedFunction:*/memory/bc_core_compare.c
+unusedFunction:*/memory/bc_core_contains.c
+unusedFunction:*/memory/bc_core_copy.c
+unusedFunction:*/memory/bc_core_count.c
+unusedFunction:*/memory/bc_core_fill.c
+unusedFunction:*/memory/bc_core_find.c
+unusedFunction:*/memory/bc_core_length.c
+unusedFunction:*/memory/bc_core_move.c
+unusedFunction:*/memory/bc_core_swap.c
+unusedFunction:*/memory/bc_core_zero.c
+unusedFunction:*/memory/bc_core_zero_secure.c
+
+// --- Inline helpers in public headers consumed downstream ---
+unusedFunction:*/bc_core_math.h
