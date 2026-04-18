@@ -33,3 +33,14 @@ unusedFunction:*/memory/bc_core_zero_secure.c
 
 // --- Inline helpers in public headers consumed downstream ---
 unusedFunction:*/bc_core_math.h
+
+// --- Linker wrap hooks in tests (invoked via -Wl,--wrap=) ---
+unusedFunction:*tests/*_wrap.c
+unusedFunction:*/tests/*_wrap.c
+
+// --- Allow suppression entries that may not match on every cppcheck
+//     version / include path layout (CI vs local) ---
+unmatchedSuppression
+missingIncludeSystem:*
+normalCheckLevelMaxBranches:*
+checkersReport
