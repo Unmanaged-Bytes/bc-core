@@ -653,6 +653,29 @@ static void test_count_lines_with_pattern_simd_candidates_after_last_newline_in_
     assert_int_equal(count, 1);
 }
 
+static void test_count_lines_with_pattern_simd_newline_at_last_bit_no_shift_overflow(void** state)
+{
+    BC_UNUSED(state);
+
+    /*
+     * Regression (fuzzer finding): when the only newline in a SIMD chunk lands at bit 31,
+     * the mask-clear step computed 1u << (newline_bit + 1) = 1u << 32 on a 32-bit unsigned,
+     * which is undefined behaviour. Trigger it: candidate at bit 0, newline at bit 31,
+     * both non-zero so the inner while loop runs and executes the clear.
+     */
+    unsigned char data[64];
+    bc_core_fill(data, sizeof(data), (unsigned char)'A');
+    data[0] = 'x';
+    data[31] = '\n';
+    const char* pattern = "x";
+    size_t count = 0;
+
+    bool success = bc_core_count_lines_with_pattern(data, sizeof(data), pattern, 1, &count);
+
+    assert_true(success);
+    assert_int_equal(count, 1);
+}
+
 static void test_count_lines_with_pattern_simd_no_newline_false_positive_then_real_match(void** state)
 {
     BC_UNUSED(state);
@@ -1452,6 +1475,7 @@ int main(void)
         cmocka_unit_test(test_count_lines_with_pattern_simd_path_interleaved_newlines_and_candidates),
         cmocka_unit_test(test_count_lines_with_pattern_simd_newlines_only_chunk_counts_prior_match),
         cmocka_unit_test(test_count_lines_with_pattern_simd_candidates_after_last_newline_in_chunk),
+        cmocka_unit_test(test_count_lines_with_pattern_simd_newline_at_last_bit_no_shift_overflow),
         cmocka_unit_test(test_count_lines_with_pattern_pattern_matched_multiple_times_on_same_line_counts_once),
         cmocka_unit_test(test_count_lines_with_pattern_pattern_longer_than_data_simd_limit_zero),
         cmocka_unit_test(test_count_lines_with_pattern_simd_newlines_no_candidates_no_prior_match),

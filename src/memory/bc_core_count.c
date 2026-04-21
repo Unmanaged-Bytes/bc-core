@@ -234,7 +234,7 @@ __attribute__((target("avx2"))) static bool bc_core_count_lines_with_pattern_avx
                 count++;
             }
             current_line_has_match = false;
-            candidate_mask &= ~((1u << (newline_bit + 1)) - 1);
+            candidate_mask &= (unsigned int)~(((uint64_t)1 << (newline_bit + 1)) - 1);
             newline_mask &= newline_mask - 1;
         }
 
