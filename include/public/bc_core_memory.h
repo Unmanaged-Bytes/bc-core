@@ -30,6 +30,8 @@ bool bc_core_count_lines_with_pattern(const void* data, size_t len, const void* 
 bool bc_core_count_words(const void* data, size_t len, bool* in_word_state, size_t* out_count);
 bool bc_core_count_words_ascii(const void* data, size_t len, bool* in_word_state, size_t* out_count);
 
+bool bc_core_ascii_lowercase(void* data, size_t len);
+
 void bc_core_contains_byte(const void* data, size_t len, unsigned char target, bool* out_found);
 void bc_core_contains_pattern(const void* data, size_t len, const void* pattern, size_t pattern_len, bool* out_found);
 void bc_core_starts_with(const void* data, size_t len, const void* prefix, size_t prefix_len, bool* out_result);

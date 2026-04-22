@@ -55,6 +55,11 @@ test_bc_core_length = executable('test_bc_core_length',
     dependencies : [cmocka_dep, bc_core_dep],
 )
 
+test_bc_core_ascii = executable('test_bc_core_ascii',
+    'test_bc_core_ascii.c',
+    dependencies : [cmocka_dep, bc_core_dep],
+)
+
 test_bc_core_checksum = executable('test_bc_core_checksum',
     'test_bc_core_checksum.c',
     dependencies : [bc_core_dep, cmocka_dep],
@@ -87,6 +92,7 @@ test('contains', test_bc_core_contains)
 test('find', test_bc_core_find)
 test('count', test_bc_core_count)
 test('length', test_bc_core_length)
+test('ascii', test_bc_core_ascii)
 test('checksum', test_bc_core_checksum, suite : 'hw')
 
 test_bc_core_zero_wrap = executable('test_bc_core_zero_wrap',

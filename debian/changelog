@@ -1,3 +1,13 @@
+libbc-core (1.2.0-1) stable; urgency=medium
+
+  * Add bc_core_ascii_lowercase(void*, size_t): AVX2 / SSE2 / scalar
+    dispatch for in-place ASCII lowercase. Consumed by bc-count for
+    pattern --ignore-case; generic primitive reusable by bc-text,
+    bc-hrtl.
+  * No breaking API change.
+
+ -- Younes Benmoussa <younes.benmoussa@pm.me>  Wed, 22 Apr 2026 23:59:00 +0000
+
 libbc-core (1.1.0-1) stable; urgency=medium
 
   * Add libFuzzer harness infrastructure under fuzzing/ (3 targets:
