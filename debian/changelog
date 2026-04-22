@@ -1,3 +1,15 @@
+libbc-core (1.1.0-1) stable; urgency=medium
+
+  * Add libFuzzer harness infrastructure under fuzzing/ (3 targets:
+    hash, memory, search). Gated by -Dfuzzing=true and
+    -fsanitize=fuzzer when CC=clang.
+  * Fix shift-by-32 undefined behaviour in
+    bc_core_count_lines_with_pattern when the AVX2 path computes
+    1u << (newline_bit + 1) and newline_bit == 31. Cast to uint64
+    before shifting. Found via libFuzzer, regression test added.
+
+ -- Younes Benmoussa <younes.benmoussa@pm.me>  Wed, 22 Apr 2026 08:00:00 +0000
+
 libbc-core (1.0.0-1) stable; urgency=medium
 
   * Initial public release.
