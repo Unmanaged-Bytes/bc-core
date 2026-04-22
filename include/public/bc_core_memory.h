@@ -21,6 +21,23 @@ bool bc_core_find_byte(const void* data, size_t len, unsigned char target, size_
 bool bc_core_find_pattern(const void* data, size_t len, const void* pattern, size_t pattern_len, size_t* out_offset);
 bool bc_core_find_last_byte(const void* data, size_t len, unsigned char target, size_t* out_offset);
 bool bc_core_find_any_byte(const void* data, size_t len, const unsigned char* targets, size_t target_count, size_t* out_offset);
+
+/* Prepared byte-mask primitive. The LUT is computed once via
+   bc_core_byte_mask_prepare and reused by bc_core_find_byte_in_mask /
+   bc_core_find_byte_not_in_mask — amortises the LUT build cost on
+   repeated short-range scans (lexers, protocol parsers, etc). */
+typedef struct bc_core_byte_mask {
+    unsigned char lut_lo_pass1[16];
+    unsigned char lut_hi_pass1[16];
+    unsigned char lut_lo_pass2[16];
+    unsigned char lut_hi_pass2[16];
+} bc_core_byte_mask_t;
+
+bool bc_core_byte_mask_prepare(const unsigned char* targets, size_t target_count, bc_core_byte_mask_t* out_mask);
+bool bc_core_byte_mask_prepare_predicate(bool (*predicate)(unsigned char byte, void* user_data), void* user_data,
+                                         bc_core_byte_mask_t* out_mask);
+bool bc_core_find_byte_in_mask(const void* data, size_t len, const bc_core_byte_mask_t* mask, size_t* out_offset);
+bool bc_core_find_byte_not_in_mask(const void* data, size_t len, const bc_core_byte_mask_t* mask, size_t* out_offset);
 bool bc_core_length(const void* data, unsigned char terminator, size_t* out_length);
 
 bool bc_core_count_byte(const void* data, size_t len, unsigned char target, size_t* out_count);

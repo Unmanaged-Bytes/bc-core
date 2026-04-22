@@ -364,3 +364,161 @@ bool bc_core_find_any_byte(const void* data, size_t len, const unsigned char* ta
 {
     return g_find_any_byte_impl(data, len, targets, target_count, out_offset);
 }
+
+bool bc_core_byte_mask_prepare(const unsigned char* targets, size_t target_count, bc_core_byte_mask_t* out_mask)
+{
+    if (target_count > 0 && targets == NULL) {
+        return false;
+    }
+    for (int i = 0; i < 16; i++) {
+        out_mask->lut_lo_pass1[i] = 0;
+        out_mask->lut_lo_pass2[i] = 0;
+        out_mask->lut_hi_pass1[i] = (unsigned char)((i < 8) ? (1 << i) : 0);
+        out_mask->lut_hi_pass2[i] = (unsigned char)((i >= 8) ? (1 << (i - 8)) : 0);
+    }
+    for (size_t t = 0; t < target_count; t++) {
+        unsigned char byte_value = targets[t];
+        int low_nibble = byte_value & 0x0F;
+        int high_nibble = (byte_value >> 4) & 0x0F;
+        if (high_nibble < 8) {
+            out_mask->lut_lo_pass1[low_nibble] |= (unsigned char)(1 << high_nibble);
+        } else {
+            out_mask->lut_lo_pass2[low_nibble] |= (unsigned char)(1 << (high_nibble - 8));
+        }
+    }
+    return true;
+}
+
+bool bc_core_byte_mask_prepare_predicate(bool (*predicate)(unsigned char byte, void* user_data), void* user_data,
+                                         bc_core_byte_mask_t* out_mask)
+{
+    if (predicate == NULL) {
+        return false;
+    }
+    unsigned char targets[256];
+    size_t count = 0;
+    for (int byte_value = 0; byte_value < 256; byte_value++) {
+        if (predicate((unsigned char)byte_value, user_data)) {
+            targets[count++] = (unsigned char)byte_value;
+        }
+    }
+    return bc_core_byte_mask_prepare(targets, count, out_mask);
+}
+
+__attribute__((target("avx2"))) static bool bc_core_find_byte_in_mask_avx2(const void* data, size_t len,
+                                                                            const bc_core_byte_mask_t* mask, size_t* out_offset)
+{
+    if (len == 0) {
+        return false;
+    }
+
+    const unsigned char* bytes = (const unsigned char*)data;
+    __m256i lo_lut1 = _mm256_broadcastsi128_si256(_mm_loadu_si128((const __m128i*)mask->lut_lo_pass1));
+    __m256i hi_lut1 = _mm256_broadcastsi128_si256(_mm_loadu_si128((const __m128i*)mask->lut_hi_pass1));
+    __m256i lo_lut2 = _mm256_broadcastsi128_si256(_mm_loadu_si128((const __m128i*)mask->lut_lo_pass2));
+    __m256i hi_lut2 = _mm256_broadcastsi128_si256(_mm_loadu_si128((const __m128i*)mask->lut_hi_pass2));
+    __m256i nibble_mask = _mm256_set1_epi8(0x0F);
+    __m256i zero = _mm256_setzero_si256();
+
+    const unsigned char* ptr = bytes;
+    const unsigned char* end = bytes + len;
+
+    while (ptr + 32 <= end) {
+        __m256i data_vec = _mm256_loadu_si256((const __m256i*)ptr);
+        __m256i low_nibbles = _mm256_and_si256(data_vec, nibble_mask);
+        __m256i high_nibbles = _mm256_and_si256(_mm256_srli_epi16(data_vec, 4), nibble_mask);
+        __m256i match1 = _mm256_and_si256(_mm256_shuffle_epi8(lo_lut1, low_nibbles), _mm256_shuffle_epi8(hi_lut1, high_nibbles));
+        __m256i match2 = _mm256_and_si256(_mm256_shuffle_epi8(lo_lut2, low_nibbles), _mm256_shuffle_epi8(hi_lut2, high_nibbles));
+        __m256i combined = _mm256_or_si256(match1, match2);
+        __m256i is_nonzero = _mm256_cmpeq_epi8(combined, zero);
+        int match_mask = ~_mm256_movemask_epi8(is_nonzero);
+        if (match_mask != 0) {
+            *out_offset = (size_t)(ptr - bytes) + (size_t)__builtin_ctz((unsigned int)match_mask);
+            return true;
+        }
+        ptr += 32;
+    }
+
+    while (ptr < end) {
+        unsigned char byte_value = *ptr;
+        int low_nibble = byte_value & 0x0F;
+        int high_nibble = (byte_value >> 4) & 0x0F;
+        unsigned char combined = 0;
+        if (high_nibble < 8) {
+            combined = (unsigned char)(mask->lut_lo_pass1[low_nibble] & (1 << high_nibble));
+        } else {
+            combined = (unsigned char)(mask->lut_lo_pass2[low_nibble] & (1 << (high_nibble - 8)));
+        }
+        if (combined != 0) {
+            *out_offset = (size_t)(ptr - bytes);
+            return true;
+        }
+        ptr++;
+    }
+
+    return false;
+}
+
+__attribute__((target("avx2"))) static bool bc_core_find_byte_not_in_mask_avx2(const void* data, size_t len,
+                                                                                const bc_core_byte_mask_t* mask, size_t* out_offset)
+{
+    if (len == 0) {
+        return false;
+    }
+
+    const unsigned char* bytes = (const unsigned char*)data;
+    __m256i lo_lut1 = _mm256_broadcastsi128_si256(_mm_loadu_si128((const __m128i*)mask->lut_lo_pass1));
+    __m256i hi_lut1 = _mm256_broadcastsi128_si256(_mm_loadu_si128((const __m128i*)mask->lut_hi_pass1));
+    __m256i lo_lut2 = _mm256_broadcastsi128_si256(_mm_loadu_si128((const __m128i*)mask->lut_lo_pass2));
+    __m256i hi_lut2 = _mm256_broadcastsi128_si256(_mm_loadu_si128((const __m128i*)mask->lut_hi_pass2));
+    __m256i nibble_mask = _mm256_set1_epi8(0x0F);
+    __m256i zero = _mm256_setzero_si256();
+
+    const unsigned char* ptr = bytes;
+    const unsigned char* end = bytes + len;
+
+    while (ptr + 32 <= end) {
+        __m256i data_vec = _mm256_loadu_si256((const __m256i*)ptr);
+        __m256i low_nibbles = _mm256_and_si256(data_vec, nibble_mask);
+        __m256i high_nibbles = _mm256_and_si256(_mm256_srli_epi16(data_vec, 4), nibble_mask);
+        __m256i match1 = _mm256_and_si256(_mm256_shuffle_epi8(lo_lut1, low_nibbles), _mm256_shuffle_epi8(hi_lut1, high_nibbles));
+        __m256i match2 = _mm256_and_si256(_mm256_shuffle_epi8(lo_lut2, low_nibbles), _mm256_shuffle_epi8(hi_lut2, high_nibbles));
+        __m256i combined = _mm256_or_si256(match1, match2);
+        __m256i is_zero = _mm256_cmpeq_epi8(combined, zero);
+        int miss_mask = _mm256_movemask_epi8(is_zero);
+        if (miss_mask != 0) {
+            *out_offset = (size_t)(ptr - bytes) + (size_t)__builtin_ctz((unsigned int)miss_mask);
+            return true;
+        }
+        ptr += 32;
+    }
+
+    while (ptr < end) {
+        unsigned char byte_value = *ptr;
+        int low_nibble = byte_value & 0x0F;
+        int high_nibble = (byte_value >> 4) & 0x0F;
+        unsigned char combined = 0;
+        if (high_nibble < 8) {
+            combined = (unsigned char)(mask->lut_lo_pass1[low_nibble] & (1 << high_nibble));
+        } else {
+            combined = (unsigned char)(mask->lut_lo_pass2[low_nibble] & (1 << (high_nibble - 8)));
+        }
+        if (combined == 0) {
+            *out_offset = (size_t)(ptr - bytes);
+            return true;
+        }
+        ptr++;
+    }
+
+    return false;
+}
+
+bool bc_core_find_byte_in_mask(const void* data, size_t len, const bc_core_byte_mask_t* mask, size_t* out_offset)
+{
+    return bc_core_find_byte_in_mask_avx2(data, len, mask, out_offset);
+}
+
+bool bc_core_find_byte_not_in_mask(const void* data, size_t len, const bc_core_byte_mask_t* mask, size_t* out_offset)
+{
+    return bc_core_find_byte_not_in_mask_avx2(data, len, mask, out_offset);
+}
