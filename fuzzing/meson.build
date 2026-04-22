@@ -1,9 +1,23 @@
-fuzz_bc_core_hash = executable('fuzz_bc_core_hash',
-    'fuzz_bc_core_hash.c',
-    dependencies : [bc_core_dep],
-)
+# SPDX-License-Identifier: MIT
 
-fuzz_bc_core_memory = executable('fuzz_bc_core_memory',
-    'fuzz_bc_core_memory.c',
-    dependencies : [bc_core_dep],
-)
+fuzzer_c_args = []
+fuzzer_link_args = []
+if cc.get_id() == 'clang'
+    fuzzer_c_args += ['-fsanitize=fuzzer', '-DBC_FUZZ_LIBFUZZER']
+    fuzzer_link_args += ['-fsanitize=fuzzer']
+endif
+
+fuzz_targets = [
+    'bc_core_hash',
+    'bc_core_memory',
+    'bc_core_search',
+]
+
+foreach name : fuzz_targets
+    executable('fuzz_' + name,
+        'fuzz_' + name + '.c',
+        dependencies : [bc_core_dep],
+        c_args : fuzzer_c_args,
+        link_args : fuzzer_link_args,
+    )
+endforeach
