@@ -3,7 +3,6 @@
 #ifndef BC_CORE_CPU_H
 #define BC_CORE_CPU_H
 
-#include <immintrin.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -13,7 +12,7 @@
 #define BC_CACHE_LINE_ALIGNED BC_ALIGN(BC_CACHE_LINE_SIZE)
 #define bc_core_prefetch_for_read(addr) __builtin_prefetch((addr), 0, 3)
 #define bc_core_prefetch_for_write(addr) __builtin_prefetch((addr), 1, 3)
-#define bc_core_spin_pause() _mm_pause()
+#define bc_core_spin_pause() __asm__ __volatile__("pause" ::: "memory")
 
 typedef enum {
     BC_CORE_CACHE_POLICY_DEFAULT,

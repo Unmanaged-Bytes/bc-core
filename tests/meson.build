@@ -9,6 +9,12 @@ test_bc_core_math = executable('test_bc_core_math',
     dependencies : [bc_core_dep, cmocka_dep],
 )
 
+test_bc_core_public_headers_hygiene = executable('test_bc_core_public_headers_hygiene',
+    'test_bc_core_public_headers_hygiene.c',
+    c_args : ['-DBC_CORE_SOURCE_ROOT="' + meson.project_source_root() + '"'],
+    dependencies : [cmocka_dep],
+)
+
 test_bc_core_unaligned = executable('test_bc_core_unaligned',
     'test_bc_core_unaligned.c',
     dependencies : [bc_core_dep, cmocka_dep],
@@ -83,6 +89,7 @@ test_bc_core_cpu_wrap = executable('test_bc_core_cpu_wrap',
 )
 
 test('math', test_bc_core_math)
+test('public_headers_hygiene', test_bc_core_public_headers_hygiene)
 test('unaligned', test_bc_core_unaligned)
 test('cpu', test_bc_core_cpu)
 test('fill', test_bc_core_fill)

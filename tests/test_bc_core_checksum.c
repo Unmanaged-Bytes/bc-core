@@ -8,6 +8,7 @@
 #include "bc_core.h"
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* ===== CRC32C ===== */
