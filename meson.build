@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 project('bc-core', 'c',
-  version : '1.3.0',
+  version : '1.3.1',
   license : 'MIT',
   default_options : [
     'c_std=c11',
