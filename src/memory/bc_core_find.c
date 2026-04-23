@@ -367,9 +367,6 @@ bool bc_core_find_any_byte(const void* data, size_t len, const unsigned char* ta
 
 bool bc_core_byte_mask_prepare(const unsigned char* targets, size_t target_count, bc_core_byte_mask_t* out_mask)
 {
-    if (target_count > 0 && targets == NULL) {
-        return false;
-    }
     for (int i = 0; i < 16; i++) {
         out_mask->lut_lo_pass1[i] = 0;
         out_mask->lut_lo_pass2[i] = 0;
@@ -392,9 +389,6 @@ bool bc_core_byte_mask_prepare(const unsigned char* targets, size_t target_count
 bool bc_core_byte_mask_prepare_predicate(bool (*predicate)(unsigned char byte, void* user_data), void* user_data,
                                          bc_core_byte_mask_t* out_mask)
 {
-    if (predicate == NULL) {
-        return false;
-    }
     unsigned char targets[256];
     size_t count = 0;
     for (int byte_value = 0; byte_value < 256; byte_value++) {
