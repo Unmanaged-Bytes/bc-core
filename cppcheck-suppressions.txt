@@ -19,6 +19,7 @@ unusedFunction:*/cpu/bc_core_cpu.c
 unusedFunction:*/cpu/bc_core_cpu_prefetch.c
 unusedFunction:*/cpu/bc_core_cache_sizes.c
 unusedFunction:*/hash/bc_core_hash_crc32c.c
+unusedFunction:*/memory/bc_core_ascii.c
 unusedFunction:*/memory/bc_core_compare.c
 unusedFunction:*/memory/bc_core_contains.c
 unusedFunction:*/memory/bc_core_copy.c
