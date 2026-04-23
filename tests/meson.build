@@ -266,3 +266,21 @@ test_bc_core_count_words_ascii = executable('test_bc_core_count_words_ascii',
     dependencies : [bc_core_dep, cmocka_dep],
 )
 test('count_words_ascii', test_bc_core_count_words_ascii)
+
+test_bc_core_fmt = executable('test_bc_core_fmt',
+    'test_bc_core_fmt.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('fmt', test_bc_core_fmt)
+
+test_bc_core_writer = executable('test_bc_core_writer',
+    'test_bc_core_writer.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('writer', test_bc_core_writer)
+
+test_bc_core_reader = executable('test_bc_core_reader',
+    'test_bc_core_reader.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('reader', test_bc_core_reader)

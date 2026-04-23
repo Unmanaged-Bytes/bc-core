@@ -5,6 +5,7 @@
 
 #include "bc_core_cpu.h"
 #include "bc_core_hash.h"
+#include "bc_core_io.h"
 #include "bc_core_math.h"
 #include "bc_core_memory.h"
 
