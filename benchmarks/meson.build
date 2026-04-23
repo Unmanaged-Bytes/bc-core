@@ -5,3 +5,11 @@ benchmark('bench_bc_core_ops',
     ),
     timeout : 120,
 )
+
+benchmark('bench_bc_core_fmt',
+    executable('bench_bc_core_fmt', 'bench_bc_core_fmt.c',
+        include_directories : bc_core_public_inc,
+        dependencies : [bc_core_dep],
+    ),
+    timeout : 60,
+)
