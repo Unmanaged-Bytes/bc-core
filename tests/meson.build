@@ -241,6 +241,14 @@ test_bc_core_cpu_features_cache = executable('test_bc_core_cpu_features_cache',
 )
 test('cpu_features_cache', test_bc_core_cpu_features_cache)
 
+test_bc_core_cpu_features_cache_concurrent = executable('test_bc_core_cpu_features_cache_concurrent',
+    'test_bc_core_cpu_features_cache_concurrent.c',
+    cpu_dir + '/bc_core_cpu_features.c',
+    include_directories : [bc_core_public_inc, bc_core_internal_inc],
+    dependencies : [cmocka_dep, dependency('threads')],
+)
+test('cpu_features_cache_concurrent', test_bc_core_cpu_features_cache_concurrent)
+
 test_bc_core_prefetch = executable('test_bc_core_prefetch',
     'test_bc_core_prefetch.c',
     dependencies : [bc_core_dep, cmocka_dep],

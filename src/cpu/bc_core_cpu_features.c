@@ -8,16 +8,12 @@
 #include "bc_core_cpu_features_internal.h"
 #include "bc_core.h"
 
-static _Atomic bool g_features_cached = false;
-static bc_core_cpu_features_t g_features_cache = {0};
+static _Atomic bool g_features_published = false;
+static _Atomic bool g_features_publisher_claimed = false;
+static bc_core_cpu_features_t g_features_cache;
 
-bool bc_core_cpu_features_detect(bc_core_cpu_features_t* out_features)
+static void detect_into(bc_core_cpu_features_t* out_features)
 {
-    if (atomic_load_explicit(&g_features_cached, memory_order_acquire)) {
-        *out_features = g_features_cache;
-        return true;
-    }
-
     out_features->has_sse2 = false;
     out_features->has_avx2 = false;
     out_features->has_sse42 = false;
@@ -46,7 +42,29 @@ bool bc_core_cpu_features_detect(bc_core_cpu_features_t* out_features)
     out_features->has_avx2 = (ebx & (1u << 5)) != 0;
     out_features->has_sha = (ebx & (1u << 29)) != 0;
     out_features->has_vpclmul = (ecx & (1u << 10)) != 0;
-    g_features_cache = *out_features;
-    atomic_store_explicit(&g_features_cached, true, memory_order_release);
+}
+
+bool bc_core_cpu_features_detect(bc_core_cpu_features_t* out_features)
+{
+    if (atomic_load_explicit(&g_features_published, memory_order_acquire)) {
+        *out_features = g_features_cache;
+        return true;
+    }
+
+    bc_core_cpu_features_t local;
+    detect_into(&local);
+    *out_features = local;
+
+    bool expected = false;
+    if (atomic_compare_exchange_strong_explicit(
+            &g_features_publisher_claimed,
+            &expected,
+            true,
+            memory_order_acq_rel,
+            memory_order_relaxed)) {
+        g_features_cache = local;
+        atomic_store_explicit(&g_features_published, true, memory_order_release);
+    }
+
     return true;
 }
