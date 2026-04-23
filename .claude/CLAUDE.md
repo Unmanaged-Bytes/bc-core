@@ -17,6 +17,17 @@ builds on.
 - **Sanitizers (asan/tsan/ubsan/memcheck) stay green** in CI.
 - **cppcheck stays clean**; never edit `cppcheck-suppressions.txt`
   to hide real findings.
-- **CPUID dispatch is runtime, not compile-time** — binaries built
-  on any x86_64-v2 host must still pick up SHA-NI / AVX2 / BMI2
-  at runtime when available.
+- **x86-64-v3 baseline assumed** — AVX2 + BMI2 + FMA + LZCNT + MOVBE
+  are required at build time AND at runtime. Release builds pass
+  `-march=x86-64-v3`; binaries produced by bc-core (and transitively
+  any downstream bc-* consumer built in release) will SIGILL on a
+  host below x86-64-v3. SHA-NI remains runtime-dispatched via CPUID
+  (hardware-optional feature, not part of v3). No scalar fallback
+  is maintained for AVX2/BMI2 primitives — the expert target is
+  post-2013 x86 only.
+- **Public headers are ISA-neutral** — no `<immintrin.h>`,
+  `<x86intrin.h>`, or `_mm_*` / `__m128/256/512` tokens in
+  `include/public/*.h`. Consumers must be able to preprocess bc-core
+  headers without a vector-ISA include. SIMD intrinsics stay in
+  `.c` files only. Enforced by
+  `tests/test_bc_core_public_headers_hygiene.c`.
