@@ -59,7 +59,8 @@ bool bc_core_format_unsigned_integer_64_hexadecimal(char* buffer, size_t capacit
     return true;
 }
 
-bool bc_core_format_unsigned_integer_64_hexadecimal_padded(char* buffer, size_t capacity, uint64_t value, size_t digits_requested, size_t* out_length)
+bool bc_core_format_unsigned_integer_64_hexadecimal_padded(char* buffer, size_t capacity, uint64_t value, size_t digits_requested,
+                                                           size_t* out_length)
 {
     static const char digits[] = "0123456789abcdef";
 

@@ -30,8 +30,7 @@ bool bc_core_writer_write_bytes(bc_core_writer_t* writer, const void* data, size
 bool bc_core_writer_write_char(bc_core_writer_t* writer, char value);
 bool bc_core_writer_write_error_description(bc_core_writer_t* writer, bc_core_error_code_t code);
 
-#define BC_CORE_WRITER_PUTS(writer, literal) \
-    bc_core_writer_write_bytes((writer), (literal), sizeof(literal) - 1U)
+#define BC_CORE_WRITER_PUTS(writer, literal) bc_core_writer_write_bytes((writer), (literal), sizeof(literal) - 1U)
 
 typedef struct bc_core_reader {
     int fd;

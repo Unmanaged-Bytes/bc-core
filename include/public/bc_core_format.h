@@ -11,7 +11,8 @@
 
 bool bc_core_format_unsigned_integer_64_decimal(char* buffer, size_t capacity, uint64_t value, size_t* out_length);
 bool bc_core_format_unsigned_integer_64_hexadecimal(char* buffer, size_t capacity, uint64_t value, size_t* out_length);
-bool bc_core_format_unsigned_integer_64_hexadecimal_padded(char* buffer, size_t capacity, uint64_t value, size_t digits, size_t* out_length);
+bool bc_core_format_unsigned_integer_64_hexadecimal_padded(char* buffer, size_t capacity, uint64_t value, size_t digits,
+                                                           size_t* out_length);
 bool bc_core_format_signed_integer_64(char* buffer, size_t capacity, int64_t value, size_t* out_length);
 bool bc_core_format_double(char* buffer, size_t capacity, double value, int frac_digits, size_t* out_length);
 bool bc_core_format_bytes_human_readable(char* buffer, size_t capacity, uint64_t bytes, size_t* out_length);

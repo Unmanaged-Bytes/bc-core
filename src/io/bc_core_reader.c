@@ -65,8 +65,7 @@ static bool reader_refill(bc_core_reader_t* reader)
     }
 
     while (true) {
-        ssize_t received = read(reader->fd, reader->buffer + reader->fill_position,
-                                reader->capacity - reader->fill_position);
+        ssize_t received = read(reader->fd, reader->buffer + reader->fill_position, reader->capacity - reader->fill_position);
         if (received < 0) {
             if (errno == EINTR) {
                 continue;

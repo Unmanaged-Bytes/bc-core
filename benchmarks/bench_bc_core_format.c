@@ -36,10 +36,8 @@ static void bench_uint64_dec(void)
     }
     uint64_t elapsed_snprintf = now_ns() - start_snprintf;
 
-    printf("  uint64_dec  bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n",
-           (double)elapsed_ours / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)elapsed_ours);
+    printf("  uint64_dec  bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n", (double)elapsed_ours / (double)FMT_ITERS,
+           (double)elapsed_snprintf / (double)FMT_ITERS, (double)elapsed_snprintf / (double)elapsed_ours);
     (void)sink;
 }
 
@@ -63,10 +61,8 @@ static void bench_uint64_hex(void)
     }
     uint64_t elapsed_snprintf = now_ns() - start_snprintf;
 
-    printf("  uint64_hex  bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n",
-           (double)elapsed_ours / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)elapsed_ours);
+    printf("  uint64_hex  bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n", (double)elapsed_ours / (double)FMT_ITERS,
+           (double)elapsed_snprintf / (double)FMT_ITERS, (double)elapsed_snprintf / (double)elapsed_ours);
     (void)sink;
 }
 
@@ -92,10 +88,8 @@ static void bench_int64(void)
     }
     uint64_t elapsed_snprintf = now_ns() - start_snprintf;
 
-    printf("  int64       bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n",
-           (double)elapsed_ours / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)elapsed_ours);
+    printf("  int64       bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n", (double)elapsed_ours / (double)FMT_ITERS,
+           (double)elapsed_snprintf / (double)FMT_ITERS, (double)elapsed_snprintf / (double)elapsed_ours);
     (void)sink;
 }
 
@@ -121,10 +115,8 @@ static void bench_double(void)
     }
     uint64_t elapsed_snprintf = now_ns() - start_snprintf;
 
-    printf("  double      bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n",
-           (double)elapsed_ours / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)elapsed_ours);
+    printf("  double      bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n", (double)elapsed_ours / (double)FMT_ITERS,
+           (double)elapsed_snprintf / (double)FMT_ITERS, (double)elapsed_snprintf / (double)elapsed_ours);
     (void)sink;
 }
 
