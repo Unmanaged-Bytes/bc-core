@@ -67,14 +67,23 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         bc_core_load_u32_unaligned(data + 2U, &value_32);
         bc_core_load_u64_unaligned(data + 8U, &value_64);
 
+        /* Tile bytes 0..15 contiguously: u16 at 0, u16 at 2, u32 at 4, u64 at 8.
+           Otherwise gap bytes remain uninitialized vs. data and memcmp false-positives. */
+        uint16_t value_16_b = 0;
+        uint32_t value_32_b = 0;
+        bc_core_load_u16_unaligned(data + 2U, &value_16_b);
+        bc_core_load_u32_unaligned(data + 4U, &value_32_b);
+
         unsigned char scratch[16] = {0};
         bc_core_store_u16_unaligned(scratch, value_16);
-        bc_core_store_u32_unaligned(scratch + 2U, value_32);
+        bc_core_store_u16_unaligned(scratch + 2U, value_16_b);
+        bc_core_store_u32_unaligned(scratch + 4U, value_32_b);
         bc_core_store_u64_unaligned(scratch + 8U, value_64);
 
         if (memcmp(scratch, data, 16U) != 0) {
             __builtin_trap();
         }
+        (void)value_32;
     }
 
     return 0;
