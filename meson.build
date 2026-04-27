@@ -72,6 +72,7 @@ install_headers(
   'include/public/bc_core_io.h',
   'include/public/bc_core_math.h',
   'include/public/bc_core_memory.h',
+  'include/public/bc_core_parse.h',
   'include/public/bc_core_sort.h',
   subdir : 'bc',
 )
