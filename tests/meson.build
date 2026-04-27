@@ -251,6 +251,24 @@ test_bc_core_alignment = executable('test_bc_core_alignment',
 )
 test('alignment', test_bc_core_alignment)
 
+test_bc_core_buffer_constants = executable('test_bc_core_buffer_constants',
+    'test_bc_core_buffer_constants.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('buffer_constants', test_bc_core_buffer_constants)
+
+test_bc_core_pad_to_cache_line = executable('test_bc_core_pad_to_cache_line',
+    'test_bc_core_pad_to_cache_line.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('pad_to_cache_line', test_bc_core_pad_to_cache_line)
+
+test_bc_core_false_sharing_guard = executable('test_bc_core_false_sharing_guard',
+    'test_bc_core_false_sharing_guard.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('false_sharing_guard', test_bc_core_false_sharing_guard)
+
 test_bc_core_cpu_features_cache = executable('test_bc_core_cpu_features_cache',
     'test_bc_core_cpu_features_cache.c',
     cpu_dir + '/bc_core_cpu_features.c',
