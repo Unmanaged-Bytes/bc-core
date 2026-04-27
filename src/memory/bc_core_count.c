@@ -343,9 +343,13 @@ __attribute__((target("avx2"))) static bool bc_core_count_words_avx2(const void*
         ws_mask |= carry_ws_mask;
         carry_ws_mask = 0;
 
-        __m256i lead_any = _mm256_or_si256(_mm256_or_si256(_mm256_cmpeq_epi8(data_vec, byte_c2), _mm256_cmpeq_epi8(data_vec, byte_e1)),
-                                           _mm256_or_si256(_mm256_cmpeq_epi8(data_vec, byte_e2), _mm256_cmpeq_epi8(data_vec, byte_e3)));
-        unsigned int lead_mask_val = (unsigned int)_mm256_movemask_epi8(lead_any);
+        unsigned int high_bit_mask = (unsigned int)_mm256_movemask_epi8(data_vec);
+        unsigned int lead_mask_val = 0;
+        if (high_bit_mask != 0) {
+            __m256i lead_any = _mm256_or_si256(_mm256_or_si256(_mm256_cmpeq_epi8(data_vec, byte_c2), _mm256_cmpeq_epi8(data_vec, byte_e1)),
+                                               _mm256_or_si256(_mm256_cmpeq_epi8(data_vec, byte_e2), _mm256_cmpeq_epi8(data_vec, byte_e3)));
+            lead_mask_val = (unsigned int)_mm256_movemask_epi8(lead_any);
+        }
 
         while (lead_mask_val != 0) {
             int pos = __builtin_ctz(lead_mask_val);
