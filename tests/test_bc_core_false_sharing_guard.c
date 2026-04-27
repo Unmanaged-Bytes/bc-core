@@ -10,6 +10,7 @@
 #include <stdalign.h>
 #include <stdint.h>
 
+// cppcheck-suppress-begin unusedStructMember
 typedef struct {
     BC_FALSE_SHARING_GUARD(uint64_t, producer_counter);
     BC_FALSE_SHARING_GUARD(uint64_t, consumer_counter);
@@ -27,6 +28,7 @@ _Static_assert(alignof(bc_test_guarded_pair_t) >= BC_CACHE_LINE_SIZE,
 typedef struct {
     BC_FALSE_SHARING_GUARD(uint32_t, lone_value);
 } bc_test_guarded_single_t;
+// cppcheck-suppress-end unusedStructMember
 
 _Static_assert(sizeof(bc_test_guarded_single_t) == BC_CACHE_LINE_SIZE,
                "BC_FALSE_SHARING_GUARD must pad a single value to a full cache line");

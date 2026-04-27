@@ -7,14 +7,12 @@
 
 #include "bc_core.h"
 
+// cppcheck-suppress-begin unusedStructMember
 typedef struct {
     int hot_counter;
     BC_PAD_TO_CACHE_LINE(sizeof(int));
     int next_field;
 } bc_test_padded_struct_t;
-
-_Static_assert(offsetof(bc_test_padded_struct_t, next_field) == BC_CACHE_LINE_SIZE,
-               "BC_PAD_TO_CACHE_LINE must push next_field onto the next cache line");
 
 typedef struct {
     char data[40];
@@ -22,13 +20,17 @@ typedef struct {
     char tail;
 } bc_test_padded_40_t;
 
-_Static_assert(offsetof(bc_test_padded_40_t, tail) == BC_CACHE_LINE_SIZE, "BC_PAD_TO_CACHE_LINE must align tail at 64 when used_bytes=40");
-
 typedef struct {
     char head;
     BC_PAD_TO_CACHE_LINE(1);
     char tail;
 } bc_test_padded_1_t;
+// cppcheck-suppress-end unusedStructMember
+
+_Static_assert(offsetof(bc_test_padded_struct_t, next_field) == BC_CACHE_LINE_SIZE,
+               "BC_PAD_TO_CACHE_LINE must push next_field onto the next cache line");
+
+_Static_assert(offsetof(bc_test_padded_40_t, tail) == BC_CACHE_LINE_SIZE, "BC_PAD_TO_CACHE_LINE must align tail at 64 when used_bytes=40");
 
 _Static_assert(offsetof(bc_test_padded_1_t, tail) == BC_CACHE_LINE_SIZE, "BC_PAD_TO_CACHE_LINE must align tail at 64 when used_bytes=1");
 
