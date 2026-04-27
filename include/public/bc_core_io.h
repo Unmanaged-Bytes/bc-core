@@ -28,28 +28,9 @@ bool bc_core_writer_buffer_data(const bc_core_writer_t* writer, const char** out
 
 bool bc_core_writer_write_bytes(bc_core_writer_t* writer, const void* data, size_t len);
 bool bc_core_writer_write_char(bc_core_writer_t* writer, char value);
-bool bc_core_writer_write_uint64_dec(bc_core_writer_t* writer, uint64_t value);
-bool bc_core_writer_write_uint64_hex(bc_core_writer_t* writer, uint64_t value);
-bool bc_core_writer_write_uint64_hex_padded(bc_core_writer_t* writer, uint64_t value, size_t digits);
-bool bc_core_writer_write_int64(bc_core_writer_t* writer, int64_t value);
-bool bc_core_writer_write_double(bc_core_writer_t* writer, double value, int frac_digits);
-bool bc_core_writer_write_bytes_human(bc_core_writer_t* writer, uint64_t bytes);
-bool bc_core_writer_write_duration_ns(bc_core_writer_t* writer, uint64_t nanoseconds);
 bool bc_core_writer_write_error_description(bc_core_writer_t* writer, bc_core_error_code_t code);
 
-#define BC_CORE_WRITER_PUTS(writer, literal) \
-    bc_core_writer_write_bytes((writer), (literal), sizeof(literal) - 1U)
-
-bool bc_core_fmt_uint64_dec(char* buffer, size_t capacity, uint64_t value, size_t* out_length);
-bool bc_core_fmt_uint64_hex(char* buffer, size_t capacity, uint64_t value, size_t* out_length);
-bool bc_core_fmt_uint64_hex_padded(char* buffer, size_t capacity, uint64_t value, size_t digits, size_t* out_length);
-bool bc_core_fmt_int64(char* buffer, size_t capacity, int64_t value, size_t* out_length);
-bool bc_core_fmt_double(char* buffer, size_t capacity, double value, int frac_digits, size_t* out_length);
-bool bc_core_fmt_bytes_human(char* buffer, size_t capacity, uint64_t bytes, size_t* out_length);
-bool bc_core_fmt_duration_ns(char* buffer, size_t capacity, uint64_t nanoseconds, size_t* out_length);
-bool bc_core_fmt_unicode_codepoint_escape(char* buffer, size_t capacity, uint32_t codepoint, size_t* out_length);
-
-bool bc_core_writer_write_unicode_codepoint_escape(bc_core_writer_t* writer, uint32_t codepoint);
+#define BC_CORE_WRITER_PUTS(writer, literal) bc_core_writer_write_bytes((writer), (literal), sizeof(literal) - 1U)
 
 typedef struct bc_core_reader {
     int fd;

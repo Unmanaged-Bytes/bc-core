@@ -135,19 +135,19 @@ static void test_writer_formatters(void** state)
     char buffer[256];
     assert_true(bc_core_writer_init(&writer, fd, buffer, sizeof(buffer)));
 
-    assert_true(bc_core_writer_write_uint64_dec(&writer, 12345U));
+    assert_true(bc_core_writer_write_unsigned_integer_64_decimal(&writer, 12345U));
     assert_true(bc_core_writer_write_char(&writer, ' '));
-    assert_true(bc_core_writer_write_int64(&writer, -42));
+    assert_true(bc_core_writer_write_signed_integer_64(&writer, -42));
     assert_true(bc_core_writer_write_char(&writer, ' '));
-    assert_true(bc_core_writer_write_uint64_hex(&writer, 0xBEEFU));
+    assert_true(bc_core_writer_write_unsigned_integer_64_hexadecimal(&writer, 0xBEEFU));
     assert_true(bc_core_writer_write_char(&writer, ' '));
-    assert_true(bc_core_writer_write_uint64_hex_padded(&writer, 0x2AU, 4U));
+    assert_true(bc_core_writer_write_unsigned_integer_64_hexadecimal_padded(&writer, 0x2AU, 4U));
     assert_true(bc_core_writer_write_char(&writer, ' '));
     assert_true(bc_core_writer_write_double(&writer, 2.5, 2));
     assert_true(bc_core_writer_write_char(&writer, ' '));
-    assert_true(bc_core_writer_write_bytes_human(&writer, 2048U));
+    assert_true(bc_core_writer_write_bytes_human_readable(&writer, 2048U));
     assert_true(bc_core_writer_write_char(&writer, ' '));
-    assert_true(bc_core_writer_write_duration_ns(&writer, 1500U));
+    assert_true(bc_core_writer_write_duration_nanoseconds(&writer, 1500U));
 
     assert_true(bc_core_writer_destroy(&writer));
     close(fd);

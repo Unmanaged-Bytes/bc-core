@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-#include "bc_core_io.h"
+#include "bc_core_format.h"
 
 #include <math.h>
 
-bool bc_core_fmt_uint64_dec(char* buffer, size_t capacity, uint64_t value, size_t* out_length)
+bool bc_core_format_unsigned_integer_64_decimal(char* buffer, size_t capacity, uint64_t value, size_t* out_length)
 {
     char scratch[21];
     size_t digit_count = 0;
@@ -31,7 +31,7 @@ bool bc_core_fmt_uint64_dec(char* buffer, size_t capacity, uint64_t value, size_
     return true;
 }
 
-bool bc_core_fmt_uint64_hex(char* buffer, size_t capacity, uint64_t value, size_t* out_length)
+bool bc_core_format_unsigned_integer_64_hexadecimal(char* buffer, size_t capacity, uint64_t value, size_t* out_length)
 {
     static const char digits[] = "0123456789abcdef";
     char scratch[16];
@@ -59,7 +59,8 @@ bool bc_core_fmt_uint64_hex(char* buffer, size_t capacity, uint64_t value, size_
     return true;
 }
 
-bool bc_core_fmt_uint64_hex_padded(char* buffer, size_t capacity, uint64_t value, size_t digits_requested, size_t* out_length)
+bool bc_core_format_unsigned_integer_64_hexadecimal_padded(char* buffer, size_t capacity, uint64_t value, size_t digits_requested,
+                                                           size_t* out_length)
 {
     static const char digits[] = "0123456789abcdef";
 
@@ -79,10 +80,10 @@ bool bc_core_fmt_uint64_hex_padded(char* buffer, size_t capacity, uint64_t value
     return true;
 }
 
-bool bc_core_fmt_int64(char* buffer, size_t capacity, int64_t value, size_t* out_length)
+bool bc_core_format_signed_integer_64(char* buffer, size_t capacity, int64_t value, size_t* out_length)
 {
     if (value >= 0) {
-        return bc_core_fmt_uint64_dec(buffer, capacity, (uint64_t)value, out_length);
+        return bc_core_format_unsigned_integer_64_decimal(buffer, capacity, (uint64_t)value, out_length);
     }
 
     if (capacity < 1U) {
@@ -99,7 +100,7 @@ bool bc_core_fmt_int64(char* buffer, size_t capacity, int64_t value, size_t* out
     }
 
     size_t digits_length = 0;
-    if (!bc_core_fmt_uint64_dec(buffer + 1, capacity - 1U, magnitude, &digits_length)) {
+    if (!bc_core_format_unsigned_integer_64_decimal(buffer + 1, capacity - 1U, magnitude, &digits_length)) {
         return false;
     }
 
@@ -107,7 +108,7 @@ bool bc_core_fmt_int64(char* buffer, size_t capacity, int64_t value, size_t* out
     return true;
 }
 
-bool bc_core_fmt_double(char* buffer, size_t capacity, double value, int frac_digits, size_t* out_length)
+bool bc_core_format_double(char* buffer, size_t capacity, double value, int frac_digits, size_t* out_length)
 {
     if (frac_digits < 0 || frac_digits > 18) {
         return false;
@@ -177,7 +178,7 @@ bool bc_core_fmt_double(char* buffer, size_t capacity, double value, int frac_di
     }
 
     size_t integer_length = 0;
-    if (!bc_core_fmt_uint64_dec(buffer + position, capacity - position, integer_part, &integer_length)) {
+    if (!bc_core_format_unsigned_integer_64_decimal(buffer + position, capacity - position, integer_part, &integer_length)) {
         return false;
     }
     position += integer_length;
@@ -205,7 +206,7 @@ bool bc_core_fmt_double(char* buffer, size_t capacity, double value, int frac_di
     return true;
 }
 
-bool bc_core_fmt_bytes_human(char* buffer, size_t capacity, uint64_t bytes, size_t* out_length)
+bool bc_core_format_bytes_human_readable(char* buffer, size_t capacity, uint64_t bytes, size_t* out_length)
 {
     static const char* const unit_labels[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
     const size_t unit_count = sizeof(unit_labels) / sizeof(unit_labels[0]);
@@ -229,7 +230,7 @@ bool bc_core_fmt_bytes_human(char* buffer, size_t capacity, uint64_t bytes, size
     }
 
     size_t value_length = 0;
-    if (!bc_core_fmt_double(buffer, capacity, display_value, frac_digits, &value_length)) {
+    if (!bc_core_format_double(buffer, capacity, display_value, frac_digits, &value_length)) {
         return false;
     }
 
@@ -252,7 +253,7 @@ bool bc_core_fmt_bytes_human(char* buffer, size_t capacity, uint64_t bytes, size
     return true;
 }
 
-bool bc_core_fmt_duration_ns(char* buffer, size_t capacity, uint64_t nanoseconds, size_t* out_length)
+bool bc_core_format_duration_nanoseconds(char* buffer, size_t capacity, uint64_t nanoseconds, size_t* out_length)
 {
     static const char* const unit_labels[] = {"ns", "us", "ms", "s"};
     static const uint64_t unit_thresholds[] = {1000U, 1000U * 1000U, 1000U * 1000U * 1000U};
@@ -281,7 +282,7 @@ bool bc_core_fmt_duration_ns(char* buffer, size_t capacity, uint64_t nanoseconds
     }
 
     size_t value_length = 0;
-    if (!bc_core_fmt_double(buffer, capacity, display_value, frac_digits, &value_length)) {
+    if (!bc_core_format_double(buffer, capacity, display_value, frac_digits, &value_length)) {
         return false;
     }
 
@@ -308,7 +309,7 @@ static void write_four_uppercase_hex(char* destination, uint32_t value)
     destination[3] = digits[value & 0xFU];
 }
 
-bool bc_core_fmt_unicode_codepoint_escape(char* buffer, size_t capacity, uint32_t codepoint, size_t* out_length)
+bool bc_core_format_unicode_codepoint_escape(char* buffer, size_t capacity, uint32_t codepoint, size_t* out_length)
 {
     if (buffer == NULL || out_length == NULL) {
         return false;

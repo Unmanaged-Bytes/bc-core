@@ -23,11 +23,8 @@ typedef enum {
     BC_CORE_ERROR_INTERNAL
 } bc_core_error_code_t;
 
-bool bc_core_error_describe(bc_core_error_code_t code,
-                            char* buffer, size_t capacity, size_t* out_length);
-bool bc_core_error_name(bc_core_error_code_t code,
-                        const char** out_name, size_t* out_name_length);
-bool bc_core_error_from_system_errno(int system_errno,
-                                     bc_core_error_code_t* out_code);
+bool bc_core_error_describe(bc_core_error_code_t code, char* buffer, size_t capacity, size_t* out_length);
+bool bc_core_error_name(bc_core_error_code_t code, const char** out_name, size_t* out_name_length);
+bool bc_core_error_from_system_errno(int system_errno, bc_core_error_code_t* out_code);
 
 #endif /* BC_CORE_ERROR_H */

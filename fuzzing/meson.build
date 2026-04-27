@@ -11,7 +11,7 @@ fuzz_targets = [
     'bc_core_hash',
     'bc_core_memory',
     'bc_core_search',
-    'bc_core_fmt',
+    'bc_core_format',
 ]
 
 foreach name : fuzz_targets

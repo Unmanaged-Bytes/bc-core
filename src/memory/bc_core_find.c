@@ -399,8 +399,8 @@ bool bc_core_byte_mask_prepare_predicate(bool (*predicate)(unsigned char byte, v
     return bc_core_byte_mask_prepare(targets, count, out_mask);
 }
 
-__attribute__((target("avx2"))) static bool bc_core_find_byte_in_mask_avx2(const void* data, size_t len,
-                                                                            const bc_core_byte_mask_t* mask, size_t* out_offset)
+__attribute__((target("avx2"))) static bool bc_core_find_byte_in_mask_avx2(const void* data, size_t len, const bc_core_byte_mask_t* mask,
+                                                                           size_t* out_offset)
 {
     if (len == 0) {
         return false;
@@ -454,7 +454,7 @@ __attribute__((target("avx2"))) static bool bc_core_find_byte_in_mask_avx2(const
 }
 
 __attribute__((target("avx2"))) static bool bc_core_find_byte_not_in_mask_avx2(const void* data, size_t len,
-                                                                                const bc_core_byte_mask_t* mask, size_t* out_offset)
+                                                                               const bc_core_byte_mask_t* mask, size_t* out_offset)
 {
     if (len == 0) {
         return false;

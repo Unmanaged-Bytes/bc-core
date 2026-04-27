@@ -12,7 +12,7 @@ static void fuzz_uint64_dec(uint64_t value)
 {
     char actual[21];
     size_t length = 0;
-    if (!bc_core_fmt_uint64_dec(actual, sizeof(actual), value, &length)) {
+    if (!bc_core_format_unsigned_integer_64_decimal(actual, sizeof(actual), value, &length)) {
         abort();
     }
     char expected[32];
@@ -32,7 +32,7 @@ static void fuzz_uint64_hex(uint64_t value)
 {
     char actual[16];
     size_t length = 0;
-    if (!bc_core_fmt_uint64_hex(actual, sizeof(actual), value, &length)) {
+    if (!bc_core_format_unsigned_integer_64_hexadecimal(actual, sizeof(actual), value, &length)) {
         abort();
     }
     char expected[32];
@@ -52,7 +52,7 @@ static void fuzz_int64(int64_t value)
 {
     char actual[22];
     size_t length = 0;
-    if (!bc_core_fmt_int64(actual, sizeof(actual), value, &length)) {
+    if (!bc_core_format_signed_integer_64(actual, sizeof(actual), value, &length)) {
         abort();
     }
     char expected[32];
@@ -75,14 +75,14 @@ static void fuzz_double(double value, int frac_digits)
     }
     char buffer[64];
     size_t length = 0;
-    (void)bc_core_fmt_double(buffer, sizeof(buffer), value, frac_digits, &length);
+    (void)bc_core_format_double(buffer, sizeof(buffer), value, frac_digits, &length);
 }
 
 static void fuzz_bytes_human(uint64_t bytes)
 {
     char buffer[32];
     size_t length = 0;
-    if (!bc_core_fmt_bytes_human(buffer, sizeof(buffer), bytes, &length)) {
+    if (!bc_core_format_bytes_human_readable(buffer, sizeof(buffer), bytes, &length)) {
         abort();
     }
 }
@@ -91,7 +91,7 @@ static void fuzz_duration_ns(uint64_t nanoseconds)
 {
     char buffer[32];
     size_t length = 0;
-    if (!bc_core_fmt_duration_ns(buffer, sizeof(buffer), nanoseconds, &length)) {
+    if (!bc_core_format_duration_nanoseconds(buffer, sizeof(buffer), nanoseconds, &length)) {
         abort();
     }
 }

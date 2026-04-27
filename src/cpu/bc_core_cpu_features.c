@@ -56,12 +56,8 @@ bool bc_core_cpu_features_detect(bc_core_cpu_features_t* out_features)
     *out_features = local;
 
     bool expected = false;
-    if (atomic_compare_exchange_strong_explicit(
-            &g_features_publisher_claimed,
-            &expected,
-            true,
-            memory_order_acq_rel,
-            memory_order_relaxed)) {
+    if (atomic_compare_exchange_strong_explicit(&g_features_publisher_claimed, &expected, true, memory_order_acq_rel,
+                                                memory_order_relaxed)) {
         g_features_cache = local;
         atomic_store_explicit(&g_features_published, true, memory_order_release);
     }

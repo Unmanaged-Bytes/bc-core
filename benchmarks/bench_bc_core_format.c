@@ -24,7 +24,7 @@ static void bench_uint64_dec(void)
     uint64_t start_ours = now_ns();
     for (unsigned iteration = 0; iteration < FMT_ITERS; iteration++) {
         size_t length = 0;
-        bc_core_fmt_uint64_dec(buffer, sizeof(buffer), (uint64_t)iteration * 31U + 17U, &length);
+        bc_core_format_unsigned_integer_64_decimal(buffer, sizeof(buffer), (uint64_t)iteration * 31U + 17U, &length);
         sink += length;
     }
     uint64_t elapsed_ours = now_ns() - start_ours;
@@ -36,10 +36,8 @@ static void bench_uint64_dec(void)
     }
     uint64_t elapsed_snprintf = now_ns() - start_snprintf;
 
-    printf("  uint64_dec  bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n",
-           (double)elapsed_ours / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)elapsed_ours);
+    printf("  uint64_dec  bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n", (double)elapsed_ours / (double)FMT_ITERS,
+           (double)elapsed_snprintf / (double)FMT_ITERS, (double)elapsed_snprintf / (double)elapsed_ours);
     (void)sink;
 }
 
@@ -51,7 +49,7 @@ static void bench_uint64_hex(void)
     uint64_t start_ours = now_ns();
     for (unsigned iteration = 0; iteration < FMT_ITERS; iteration++) {
         size_t length = 0;
-        bc_core_fmt_uint64_hex(buffer, sizeof(buffer), (uint64_t)iteration * 0xDEADBEEFU, &length);
+        bc_core_format_unsigned_integer_64_hexadecimal(buffer, sizeof(buffer), (uint64_t)iteration * 0xDEADBEEFU, &length);
         sink += length;
     }
     uint64_t elapsed_ours = now_ns() - start_ours;
@@ -63,10 +61,8 @@ static void bench_uint64_hex(void)
     }
     uint64_t elapsed_snprintf = now_ns() - start_snprintf;
 
-    printf("  uint64_hex  bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n",
-           (double)elapsed_ours / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)elapsed_ours);
+    printf("  uint64_hex  bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n", (double)elapsed_ours / (double)FMT_ITERS,
+           (double)elapsed_snprintf / (double)FMT_ITERS, (double)elapsed_snprintf / (double)elapsed_ours);
     (void)sink;
 }
 
@@ -79,7 +75,7 @@ static void bench_int64(void)
     for (unsigned iteration = 0; iteration < FMT_ITERS; iteration++) {
         size_t length = 0;
         int64_t value = (int64_t)iteration * ((iteration & 1U) ? 1 : -1);
-        bc_core_fmt_int64(buffer, sizeof(buffer), value, &length);
+        bc_core_format_signed_integer_64(buffer, sizeof(buffer), value, &length);
         sink += length;
     }
     uint64_t elapsed_ours = now_ns() - start_ours;
@@ -92,10 +88,8 @@ static void bench_int64(void)
     }
     uint64_t elapsed_snprintf = now_ns() - start_snprintf;
 
-    printf("  int64       bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n",
-           (double)elapsed_ours / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)elapsed_ours);
+    printf("  int64       bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n", (double)elapsed_ours / (double)FMT_ITERS,
+           (double)elapsed_snprintf / (double)FMT_ITERS, (double)elapsed_snprintf / (double)elapsed_ours);
     (void)sink;
 }
 
@@ -108,7 +102,7 @@ static void bench_double(void)
     for (unsigned iteration = 0; iteration < FMT_ITERS; iteration++) {
         size_t length = 0;
         double value = (double)iteration * 0.1 + 1.0;
-        bc_core_fmt_double(buffer, sizeof(buffer), value, 3, &length);
+        bc_core_format_double(buffer, sizeof(buffer), value, 3, &length);
         sink += length;
     }
     uint64_t elapsed_ours = now_ns() - start_ours;
@@ -121,16 +115,14 @@ static void bench_double(void)
     }
     uint64_t elapsed_snprintf = now_ns() - start_snprintf;
 
-    printf("  double      bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n",
-           (double)elapsed_ours / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)FMT_ITERS,
-           (double)elapsed_snprintf / (double)elapsed_ours);
+    printf("  double      bc_core=%6.1f ns/op  snprintf=%6.1f ns/op  speedup=%4.2fx\n", (double)elapsed_ours / (double)FMT_ITERS,
+           (double)elapsed_snprintf / (double)FMT_ITERS, (double)elapsed_snprintf / (double)elapsed_ours);
     (void)sink;
 }
 
 int main(void)
 {
-    printf("bench bc_core_fmt vs snprintf (%u iterations)\n", FMT_ITERS);
+    printf("bench bc_core_format vs snprintf (%u iterations)\n", FMT_ITERS);
     bench_uint64_dec();
     bench_uint64_hex();
     bench_int64();
