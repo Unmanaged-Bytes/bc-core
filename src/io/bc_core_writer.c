@@ -2,6 +2,7 @@
 
 #include "bc_core_io.h"
 #include "bc_core_error.h"
+#include "bc_core_format.h"
 #include "bc_core_memory.h"
 
 #include <errno.h>
@@ -182,44 +183,44 @@ bool bc_core_writer_write_char(bc_core_writer_t* writer, char value)
     return true;
 }
 
-bool bc_core_writer_write_uint64_dec(bc_core_writer_t* writer, uint64_t value)
+bool bc_core_writer_write_unsigned_integer_64_decimal(bc_core_writer_t* writer, uint64_t value)
 {
     char scratch[21];
     size_t length = 0;
-    if (!bc_core_fmt_uint64_dec(scratch, sizeof(scratch), value, &length)) {
+    if (!bc_core_format_unsigned_integer_64_decimal(scratch, sizeof(scratch), value, &length)) {
         writer->error_latched = 1;
         return false;
     }
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
-bool bc_core_writer_write_uint64_hex(bc_core_writer_t* writer, uint64_t value)
+bool bc_core_writer_write_unsigned_integer_64_hexadecimal(bc_core_writer_t* writer, uint64_t value)
 {
     char scratch[16];
     size_t length = 0;
-    if (!bc_core_fmt_uint64_hex(scratch, sizeof(scratch), value, &length)) {
+    if (!bc_core_format_unsigned_integer_64_hexadecimal(scratch, sizeof(scratch), value, &length)) {
         writer->error_latched = 1;
         return false;
     }
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
-bool bc_core_writer_write_uint64_hex_padded(bc_core_writer_t* writer, uint64_t value, size_t digits)
+bool bc_core_writer_write_unsigned_integer_64_hexadecimal_padded(bc_core_writer_t* writer, uint64_t value, size_t digits)
 {
     char scratch[16];
     size_t length = 0;
-    if (!bc_core_fmt_uint64_hex_padded(scratch, sizeof(scratch), value, digits, &length)) {
+    if (!bc_core_format_unsigned_integer_64_hexadecimal_padded(scratch, sizeof(scratch), value, digits, &length)) {
         writer->error_latched = 1;
         return false;
     }
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
-bool bc_core_writer_write_int64(bc_core_writer_t* writer, int64_t value)
+bool bc_core_writer_write_signed_integer_64(bc_core_writer_t* writer, int64_t value)
 {
     char scratch[22];
     size_t length = 0;
-    if (!bc_core_fmt_int64(scratch, sizeof(scratch), value, &length)) {
+    if (!bc_core_format_signed_integer_64(scratch, sizeof(scratch), value, &length)) {
         writer->error_latched = 1;
         return false;
     }
@@ -230,29 +231,29 @@ bool bc_core_writer_write_double(bc_core_writer_t* writer, double value, int fra
 {
     char scratch[64];
     size_t length = 0;
-    if (!bc_core_fmt_double(scratch, sizeof(scratch), value, frac_digits, &length)) {
+    if (!bc_core_format_double(scratch, sizeof(scratch), value, frac_digits, &length)) {
         writer->error_latched = 1;
         return false;
     }
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
-bool bc_core_writer_write_bytes_human(bc_core_writer_t* writer, uint64_t bytes)
+bool bc_core_writer_write_bytes_human_readable(bc_core_writer_t* writer, uint64_t bytes)
 {
     char scratch[32];
     size_t length = 0;
-    if (!bc_core_fmt_bytes_human(scratch, sizeof(scratch), bytes, &length)) {
+    if (!bc_core_format_bytes_human_readable(scratch, sizeof(scratch), bytes, &length)) {
         writer->error_latched = 1;
         return false;
     }
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
-bool bc_core_writer_write_duration_ns(bc_core_writer_t* writer, uint64_t nanoseconds)
+bool bc_core_writer_write_duration_nanoseconds(bc_core_writer_t* writer, uint64_t nanoseconds)
 {
     char scratch[32];
     size_t length = 0;
-    if (!bc_core_fmt_duration_ns(scratch, sizeof(scratch), nanoseconds, &length)) {
+    if (!bc_core_format_duration_nanoseconds(scratch, sizeof(scratch), nanoseconds, &length)) {
         writer->error_latched = 1;
         return false;
     }
@@ -277,7 +278,7 @@ bool bc_core_writer_write_unicode_codepoint_escape(bc_core_writer_t* writer, uin
 {
     char scratch[12];
     size_t length = 0;
-    if (!bc_core_fmt_unicode_codepoint_escape(scratch, sizeof(scratch), codepoint, &length)) {
+    if (!bc_core_format_unicode_codepoint_escape(scratch, sizeof(scratch), codepoint, &length)) {
         writer->error_latched = 1;
         return false;
     }

@@ -18,7 +18,7 @@ static void test_fmt_uint64_dec_zero(void** state)
     BC_UNUSED(state);
     char buffer[21];
     size_t length = 0;
-    assert_true(bc_core_fmt_uint64_dec(buffer, sizeof(buffer), 0U, &length));
+    assert_true(bc_core_format_unsigned_integer_64_decimal(buffer, sizeof(buffer), 0U, &length));
     assert_int_equal(length, 1);
     assert_memory_equal(buffer, "0", 1);
 }
@@ -28,7 +28,7 @@ static void test_fmt_uint64_dec_small(void** state)
     BC_UNUSED(state);
     char buffer[21];
     size_t length = 0;
-    assert_true(bc_core_fmt_uint64_dec(buffer, sizeof(buffer), 12345U, &length));
+    assert_true(bc_core_format_unsigned_integer_64_decimal(buffer, sizeof(buffer), 12345U, &length));
     assert_int_equal(length, 5);
     assert_memory_equal(buffer, "12345", 5);
 }
@@ -38,7 +38,7 @@ static void test_fmt_uint64_dec_max(void** state)
     BC_UNUSED(state);
     char buffer[21];
     size_t length = 0;
-    assert_true(bc_core_fmt_uint64_dec(buffer, sizeof(buffer), UINT64_MAX, &length));
+    assert_true(bc_core_format_unsigned_integer_64_decimal(buffer, sizeof(buffer), UINT64_MAX, &length));
     assert_int_equal(length, 20);
     assert_memory_equal(buffer, "18446744073709551615", 20);
 }
@@ -48,7 +48,7 @@ static void test_fmt_uint64_dec_overflow(void** state)
     BC_UNUSED(state);
     char buffer[3];
     size_t length = 0;
-    assert_false(bc_core_fmt_uint64_dec(buffer, sizeof(buffer), 12345U, &length));
+    assert_false(bc_core_format_unsigned_integer_64_decimal(buffer, sizeof(buffer), 12345U, &length));
 }
 
 static void test_fmt_uint64_hex(void** state)
@@ -57,15 +57,15 @@ static void test_fmt_uint64_hex(void** state)
     char buffer[16];
     size_t length = 0;
 
-    assert_true(bc_core_fmt_uint64_hex(buffer, sizeof(buffer), 0xDEADBEEFU, &length));
+    assert_true(bc_core_format_unsigned_integer_64_hexadecimal(buffer, sizeof(buffer), 0xDEADBEEFU, &length));
     assert_int_equal(length, 8);
     assert_memory_equal(buffer, "deadbeef", 8);
 
-    assert_true(bc_core_fmt_uint64_hex(buffer, sizeof(buffer), 0U, &length));
+    assert_true(bc_core_format_unsigned_integer_64_hexadecimal(buffer, sizeof(buffer), 0U, &length));
     assert_int_equal(length, 1);
     assert_memory_equal(buffer, "0", 1);
 
-    assert_true(bc_core_fmt_uint64_hex(buffer, sizeof(buffer), UINT64_MAX, &length));
+    assert_true(bc_core_format_unsigned_integer_64_hexadecimal(buffer, sizeof(buffer), UINT64_MAX, &length));
     assert_int_equal(length, 16);
     assert_memory_equal(buffer, "ffffffffffffffff", 16);
 }
@@ -76,17 +76,17 @@ static void test_fmt_uint64_hex_padded(void** state)
     char buffer[16];
     size_t length = 0;
 
-    assert_true(bc_core_fmt_uint64_hex_padded(buffer, sizeof(buffer), 0x2AU, 8U, &length));
+    assert_true(bc_core_format_unsigned_integer_64_hexadecimal_padded(buffer, sizeof(buffer), 0x2AU, 8U, &length));
     assert_int_equal(length, 8);
     assert_memory_equal(buffer, "0000002a", 8);
 
-    assert_true(bc_core_fmt_uint64_hex_padded(buffer, sizeof(buffer), 0xABCDU, 4U, &length));
+    assert_true(bc_core_format_unsigned_integer_64_hexadecimal_padded(buffer, sizeof(buffer), 0xABCDU, 4U, &length));
     assert_int_equal(length, 4);
     assert_memory_equal(buffer, "abcd", 4);
 
-    assert_false(bc_core_fmt_uint64_hex_padded(buffer, sizeof(buffer), 0x1U, 0U, &length));
-    assert_false(bc_core_fmt_uint64_hex_padded(buffer, sizeof(buffer), 0x1U, 17U, &length));
-    assert_false(bc_core_fmt_uint64_hex_padded(buffer, 3U, 0x1U, 4U, &length));
+    assert_false(bc_core_format_unsigned_integer_64_hexadecimal_padded(buffer, sizeof(buffer), 0x1U, 0U, &length));
+    assert_false(bc_core_format_unsigned_integer_64_hexadecimal_padded(buffer, sizeof(buffer), 0x1U, 17U, &length));
+    assert_false(bc_core_format_unsigned_integer_64_hexadecimal_padded(buffer, 3U, 0x1U, 4U, &length));
 }
 
 static void test_fmt_int64_positive(void** state)
@@ -94,7 +94,7 @@ static void test_fmt_int64_positive(void** state)
     BC_UNUSED(state);
     char buffer[22];
     size_t length = 0;
-    assert_true(bc_core_fmt_int64(buffer, sizeof(buffer), 42, &length));
+    assert_true(bc_core_format_signed_integer_64(buffer, sizeof(buffer), 42, &length));
     assert_int_equal(length, 2);
     assert_memory_equal(buffer, "42", 2);
 }
@@ -104,7 +104,7 @@ static void test_fmt_int64_negative(void** state)
     BC_UNUSED(state);
     char buffer[22];
     size_t length = 0;
-    assert_true(bc_core_fmt_int64(buffer, sizeof(buffer), -12345, &length));
+    assert_true(bc_core_format_signed_integer_64(buffer, sizeof(buffer), -12345, &length));
     assert_int_equal(length, 6);
     assert_memory_equal(buffer, "-12345", 6);
 }
@@ -114,7 +114,7 @@ static void test_fmt_int64_int64_min(void** state)
     BC_UNUSED(state);
     char buffer[22];
     size_t length = 0;
-    assert_true(bc_core_fmt_int64(buffer, sizeof(buffer), INT64_MIN, &length));
+    assert_true(bc_core_format_signed_integer_64(buffer, sizeof(buffer), INT64_MIN, &length));
     assert_int_equal(length, 20);
     assert_memory_equal(buffer, "-9223372036854775808", 20);
 }
@@ -124,7 +124,7 @@ static void test_fmt_int64_overflow(void** state)
     BC_UNUSED(state);
     char buffer[4];
     size_t length = 0;
-    assert_false(bc_core_fmt_int64(buffer, sizeof(buffer), -12345, &length));
+    assert_false(bc_core_format_signed_integer_64(buffer, sizeof(buffer), -12345, &length));
 }
 
 static void test_fmt_double_basic(void** state)
@@ -133,15 +133,15 @@ static void test_fmt_double_basic(void** state)
     char buffer[64];
     size_t length = 0;
 
-    assert_true(bc_core_fmt_double(buffer, sizeof(buffer), 3.14159, 2, &length));
+    assert_true(bc_core_format_double(buffer, sizeof(buffer), 3.14159, 2, &length));
     assert_int_equal(length, 4);
     assert_memory_equal(buffer, "3.14", 4);
 
-    assert_true(bc_core_fmt_double(buffer, sizeof(buffer), -0.5, 1, &length));
+    assert_true(bc_core_format_double(buffer, sizeof(buffer), -0.5, 1, &length));
     assert_int_equal(length, 4);
     assert_memory_equal(buffer, "-0.5", 4);
 
-    assert_true(bc_core_fmt_double(buffer, sizeof(buffer), 0.0, 0, &length));
+    assert_true(bc_core_format_double(buffer, sizeof(buffer), 0.0, 0, &length));
     assert_int_equal(length, 1);
     assert_memory_equal(buffer, "0", 1);
 }
@@ -152,11 +152,11 @@ static void test_fmt_double_rounding(void** state)
     char buffer[64];
     size_t length = 0;
 
-    assert_true(bc_core_fmt_double(buffer, sizeof(buffer), 0.9999, 3, &length));
+    assert_true(bc_core_format_double(buffer, sizeof(buffer), 0.9999, 3, &length));
     assert_int_equal(length, 5);
     assert_memory_equal(buffer, "1.000", 5);
 
-    assert_true(bc_core_fmt_double(buffer, sizeof(buffer), 1.005, 2, &length));
+    assert_true(bc_core_format_double(buffer, sizeof(buffer), 1.005, 2, &length));
     assert_int_equal(length, 4);
 }
 
@@ -169,15 +169,15 @@ static void test_fmt_double_special(void** state)
     double nan_value = NAN;
     double inf_value = INFINITY;
 
-    assert_true(bc_core_fmt_double(buffer, sizeof(buffer), nan_value, 3, &length));
+    assert_true(bc_core_format_double(buffer, sizeof(buffer), nan_value, 3, &length));
     assert_int_equal(length, 3);
     assert_memory_equal(buffer, "nan", 3);
 
-    assert_true(bc_core_fmt_double(buffer, sizeof(buffer), inf_value, 3, &length));
+    assert_true(bc_core_format_double(buffer, sizeof(buffer), inf_value, 3, &length));
     assert_int_equal(length, 3);
     assert_memory_equal(buffer, "inf", 3);
 
-    assert_true(bc_core_fmt_double(buffer, sizeof(buffer), -inf_value, 3, &length));
+    assert_true(bc_core_format_double(buffer, sizeof(buffer), -inf_value, 3, &length));
     assert_int_equal(length, 4);
     assert_memory_equal(buffer, "-inf", 4);
 }
@@ -187,8 +187,8 @@ static void test_fmt_double_bad_frac(void** state)
     BC_UNUSED(state);
     char buffer[64];
     size_t length = 0;
-    assert_false(bc_core_fmt_double(buffer, sizeof(buffer), 1.0, -1, &length));
-    assert_false(bc_core_fmt_double(buffer, sizeof(buffer), 1.0, 19, &length));
+    assert_false(bc_core_format_double(buffer, sizeof(buffer), 1.0, -1, &length));
+    assert_false(bc_core_format_double(buffer, sizeof(buffer), 1.0, 19, &length));
 }
 
 static void test_fmt_bytes_human(void** state)
@@ -197,16 +197,16 @@ static void test_fmt_bytes_human(void** state)
     char buffer[32];
     size_t length = 0;
 
-    assert_true(bc_core_fmt_bytes_human(buffer, sizeof(buffer), 512U, &length));
+    assert_true(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), 512U, &length));
     assert_memory_equal(buffer, "512 B", length);
 
-    assert_true(bc_core_fmt_bytes_human(buffer, sizeof(buffer), 2048U, &length));
+    assert_true(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), 2048U, &length));
     assert_memory_equal(buffer, "2.00 KB", length);
 
-    assert_true(bc_core_fmt_bytes_human(buffer, sizeof(buffer), 1536U * 1024U, &length));
+    assert_true(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), 1536U * 1024U, &length));
     assert_memory_equal(buffer, "1.50 MB", length);
 
-    assert_true(bc_core_fmt_bytes_human(buffer, sizeof(buffer), (uint64_t)1024U * 1024U * 1024U, &length));
+    assert_true(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), (uint64_t)1024U * 1024U * 1024U, &length));
     assert_memory_equal(buffer, "1.00 GB", length);
 }
 
@@ -216,16 +216,16 @@ static void test_fmt_duration_ns(void** state)
     char buffer[32];
     size_t length = 0;
 
-    assert_true(bc_core_fmt_duration_ns(buffer, sizeof(buffer), 500U, &length));
+    assert_true(bc_core_format_duration_nanoseconds(buffer, sizeof(buffer), 500U, &length));
     assert_memory_equal(buffer, "500ns", length);
 
-    assert_true(bc_core_fmt_duration_ns(buffer, sizeof(buffer), 1500U, &length));
+    assert_true(bc_core_format_duration_nanoseconds(buffer, sizeof(buffer), 1500U, &length));
     assert_memory_equal(buffer, "1.500us", length);
 
-    assert_true(bc_core_fmt_duration_ns(buffer, sizeof(buffer), 2500000U, &length));
+    assert_true(bc_core_format_duration_nanoseconds(buffer, sizeof(buffer), 2500000U, &length));
     assert_memory_equal(buffer, "2.500ms", length);
 
-    assert_true(bc_core_fmt_duration_ns(buffer, sizeof(buffer), 3500000000U, &length));
+    assert_true(bc_core_format_duration_nanoseconds(buffer, sizeof(buffer), 3500000000U, &length));
     assert_memory_equal(buffer, "3.500s", length);
 }
 
@@ -234,7 +234,7 @@ static void test_fmt_unicode_codepoint_escape_ascii(void** state)
     BC_UNUSED(state);
     char buffer[16];
     size_t length = 0;
-    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x41U, &length));
+    assert_true(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x41U, &length));
     assert_int_equal(length, 6);
     assert_memory_equal(buffer, "\\u0041", 6);
 }
@@ -244,7 +244,7 @@ static void test_fmt_unicode_codepoint_escape_zero(void** state)
     BC_UNUSED(state);
     char buffer[16];
     size_t length = 0;
-    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0000U, &length));
+    assert_true(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0000U, &length));
     assert_int_equal(length, 6);
     assert_memory_equal(buffer, "\\u0000", 6);
 }
@@ -254,7 +254,7 @@ static void test_fmt_unicode_codepoint_escape_bmp(void** state)
     BC_UNUSED(state);
     char buffer[16];
     size_t length = 0;
-    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x00E9U, &length));
+    assert_true(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x00E9U, &length));
     assert_int_equal(length, 6);
     assert_memory_equal(buffer, "\\u00E9", 6);
 }
@@ -264,7 +264,7 @@ static void test_fmt_unicode_codepoint_escape_bmp_max(void** state)
     BC_UNUSED(state);
     char buffer[16];
     size_t length = 0;
-    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0xFFFFU, &length));
+    assert_true(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0xFFFFU, &length));
     assert_int_equal(length, 6);
     assert_memory_equal(buffer, "\\uFFFF", 6);
 }
@@ -274,7 +274,7 @@ static void test_fmt_unicode_codepoint_escape_supplementary(void** state)
     BC_UNUSED(state);
     char buffer[16];
     size_t length = 0;
-    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x1F600U, &length));
+    assert_true(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x1F600U, &length));
     assert_int_equal(length, 12);
     assert_memory_equal(buffer, "\\uD83D\\uDE00", 12);
 }
@@ -284,7 +284,7 @@ static void test_fmt_unicode_codepoint_escape_supplementary_min(void** state)
     BC_UNUSED(state);
     char buffer[16];
     size_t length = 0;
-    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x10000U, &length));
+    assert_true(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x10000U, &length));
     assert_int_equal(length, 12);
     assert_memory_equal(buffer, "\\uD800\\uDC00", 12);
 }
@@ -294,7 +294,7 @@ static void test_fmt_unicode_codepoint_escape_supplementary_max(void** state)
     BC_UNUSED(state);
     char buffer[16];
     size_t length = 0;
-    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x10FFFFU, &length));
+    assert_true(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x10FFFFU, &length));
     assert_int_equal(length, 12);
     assert_memory_equal(buffer, "\\uDBFF\\uDFFF", 12);
 }
@@ -304,7 +304,7 @@ static void test_fmt_unicode_codepoint_escape_rejects_above_max(void** state)
     BC_UNUSED(state);
     char buffer[16];
     size_t length = 0;
-    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x110000U, &length));
+    assert_false(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x110000U, &length));
 }
 
 static void test_fmt_unicode_codepoint_escape_rejects_high_surrogate(void** state)
@@ -312,7 +312,7 @@ static void test_fmt_unicode_codepoint_escape_rejects_high_surrogate(void** stat
     BC_UNUSED(state);
     char buffer[16];
     size_t length = 0;
-    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0xD800U, &length));
+    assert_false(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0xD800U, &length));
 }
 
 static void test_fmt_unicode_codepoint_escape_rejects_low_surrogate(void** state)
@@ -320,7 +320,7 @@ static void test_fmt_unicode_codepoint_escape_rejects_low_surrogate(void** state
     BC_UNUSED(state);
     char buffer[16];
     size_t length = 0;
-    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0xDFFFU, &length));
+    assert_false(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0xDFFFU, &length));
 }
 
 static void test_fmt_unicode_codepoint_escape_buffer_too_small_bmp(void** state)
@@ -328,7 +328,7 @@ static void test_fmt_unicode_codepoint_escape_buffer_too_small_bmp(void** state)
     BC_UNUSED(state);
     char buffer[5];
     size_t length = 0;
-    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0041U, &length));
+    assert_false(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0041U, &length));
 }
 
 static void test_fmt_unicode_codepoint_escape_buffer_too_small_supplementary(void** state)
@@ -336,21 +336,21 @@ static void test_fmt_unicode_codepoint_escape_buffer_too_small_supplementary(voi
     BC_UNUSED(state);
     char buffer[11];
     size_t length = 0;
-    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x1F600U, &length));
+    assert_false(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x1F600U, &length));
 }
 
 static void test_fmt_unicode_codepoint_escape_null_buffer(void** state)
 {
     BC_UNUSED(state);
     size_t length = 0;
-    assert_false(bc_core_fmt_unicode_codepoint_escape(NULL, 16, 0x0041U, &length));
+    assert_false(bc_core_format_unicode_codepoint_escape(NULL, 16, 0x0041U, &length));
 }
 
 static void test_fmt_unicode_codepoint_escape_null_out_length(void** state)
 {
     BC_UNUSED(state);
     char buffer[16];
-    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0041U, NULL));
+    assert_false(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0041U, NULL));
 }
 
 static void test_writer_write_unicode_codepoint_escape(void** state)

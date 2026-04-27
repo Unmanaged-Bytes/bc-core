@@ -267,11 +267,11 @@ test_bc_core_count_words_ascii = executable('test_bc_core_count_words_ascii',
 )
 test('count_words_ascii', test_bc_core_count_words_ascii)
 
-test_bc_core_fmt = executable('test_bc_core_fmt',
-    'test_bc_core_fmt.c',
+test_bc_core_format = executable('test_bc_core_format',
+    'test_bc_core_format.c',
     dependencies : [bc_core_dep, cmocka_dep],
 )
-test('fmt', test_bc_core_fmt)
+test('format', test_bc_core_format)
 
 test_bc_core_writer = executable('test_bc_core_writer',
     'test_bc_core_writer.c',
