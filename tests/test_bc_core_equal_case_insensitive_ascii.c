@@ -85,8 +85,8 @@ static void test_digit_not_equal_to_letter(void** state)
 static void test_high_bytes_distinguished(void** state)
 {
     BC_UNUSED(state);
-    unsigned char a[1] = {0xC0};
-    unsigned char b[1] = {0xE0};
+    const unsigned char a[1] = {0xC0};
+    const unsigned char b[1] = {0xE0};
     bool out = true;
     assert_true(bc_core_equal_case_insensitive_ascii(a, 1, b, 1, &out));
     assert_false(out);
