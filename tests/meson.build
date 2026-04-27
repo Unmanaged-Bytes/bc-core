@@ -321,6 +321,12 @@ test_bc_core_thread_stress = executable('test_bc_core_thread_stress',
 )
 test('thread_stress', test_bc_core_thread_stress, timeout : 120)
 
+test_bc_core_huge_inputs = executable('test_bc_core_huge_inputs',
+    'test_bc_core_huge_inputs.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('huge_inputs', test_bc_core_huge_inputs, timeout : 600, suite : 'slow')
+
 test_bc_core_writer_io_wrap = executable('test_bc_core_writer_io_wrap',
     'test_bc_core_writer_io_wrap.c',
     '../src/io/bc_core_writer.c',
