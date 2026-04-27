@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 
 static bool less_than_int32(const void* left, const void* right, void* user_data)
 {
@@ -241,6 +242,145 @@ static void test_sort_null_base_with_count_one(void** state)
     assert_true(bc_core_sort_with_compare(NULL, 1, sizeof(int32_t), less_than_int32, NULL));
 }
 
+typedef struct {
+    uint64_t key;
+    uint32_t payload[3];
+} large_struct_12_words_t;
+
+static bool less_than_large_struct(const void* left, const void* right, void* user_data)
+{
+    BC_UNUSED(user_data);
+    return ((const large_struct_12_words_t*)left)->key < ((const large_struct_12_words_t*)right)->key;
+}
+
+static void test_sort_element_size_4_uint32(void** state)
+{
+    BC_UNUSED(state);
+    enum { COUNT = 64 };
+    uint32_t array[COUNT];
+    for (size_t index = 0; index < COUNT; ++index) {
+        array[index] = (uint32_t)((COUNT - index) * 17U);
+    }
+    assert_true(bc_core_sort_with_compare(array, COUNT, sizeof(uint32_t), less_than_int32, NULL));
+    for (size_t index = 1; index < COUNT; ++index) {
+        assert_true(array[index - 1] <= array[index]);
+    }
+}
+
+static void test_sort_element_size_8_uint64_already_sorted(void** state)
+{
+    BC_UNUSED(state);
+    enum { COUNT = 128 };
+    uint64_t array[COUNT];
+    for (size_t index = 0; index < COUNT; ++index) {
+        array[index] = (uint64_t)index;
+    }
+    assert_true(bc_core_sort_with_compare(array, COUNT, sizeof(uint64_t), less_than_uint64, NULL));
+    for (size_t index = 0; index < COUNT; ++index) {
+        assert_true(array[index] == (uint64_t)index);
+    }
+}
+
+static void test_sort_element_size_16_pair(void** state)
+{
+    BC_UNUSED(state);
+    typedef struct {
+        uint64_t key;
+        uint64_t payload;
+    } pair16_t;
+    enum { COUNT = 64 };
+    pair16_t array[COUNT];
+    for (size_t index = 0; index < COUNT; ++index) {
+        array[index].key = (uint64_t)(COUNT - index);
+        array[index].payload = (uint64_t)index;
+    }
+    assert_true(bc_core_sort_with_compare(array, COUNT, sizeof(pair16_t), less_than_uint64, NULL));
+    for (size_t index = 1; index < COUNT; ++index) {
+        assert_true(array[index - 1].key <= array[index].key);
+    }
+}
+
+static void test_sort_element_size_24_large_struct(void** state)
+{
+    BC_UNUSED(state);
+    enum { COUNT = 64 };
+    large_struct_12_words_t array[COUNT];
+    for (size_t index = 0; index < COUNT; ++index) {
+        array[index].key = (uint64_t)(COUNT - index);
+        array[index].payload[0] = (uint32_t)index;
+        array[index].payload[1] = (uint32_t)(index * 2U);
+        array[index].payload[2] = (uint32_t)(index * 3U);
+    }
+    assert_true(bc_core_sort_with_compare(array, COUNT, sizeof(large_struct_12_words_t), less_than_large_struct, NULL));
+    for (size_t index = 1; index < COUNT; ++index) {
+        assert_true(array[index - 1].key <= array[index].key);
+    }
+}
+
+static void test_sort_element_size_32_struct(void** state)
+{
+    BC_UNUSED(state);
+    typedef struct {
+        uint64_t key;
+        uint64_t payload[3];
+    } struct32_t;
+    enum { COUNT = 128 };
+    struct32_t* array = malloc(sizeof(struct32_t) * COUNT);
+    assert_non_null(array);
+    for (size_t index = 0; index < COUNT; ++index) {
+        array[index].key = (uint64_t)((COUNT - index) * 13U);
+        array[index].payload[0] = (uint64_t)index;
+        array[index].payload[1] = 0xDEADBEEFU;
+        array[index].payload[2] = 0xCAFEBABEU;
+    }
+    assert_true(bc_core_sort_with_compare(array, COUNT, sizeof(struct32_t), less_than_uint64, NULL));
+    for (size_t index = 1; index < COUNT; ++index) {
+        assert_true(array[index - 1].key <= array[index].key);
+        assert_true(array[index].payload[1] == 0xDEADBEEFU);
+        assert_true(array[index].payload[2] == 0xCAFEBABEU);
+    }
+    free(array);
+}
+
+static void test_sort_element_size_64_huge_struct(void** state)
+{
+    BC_UNUSED(state);
+    typedef struct {
+        uint64_t key;
+        uint64_t padding[7];
+    } struct64_t;
+    enum { COUNT = 64 };
+    struct64_t* array = malloc(sizeof(struct64_t) * COUNT);
+    assert_non_null(array);
+    for (size_t index = 0; index < COUNT; ++index) {
+        array[index].key = (uint64_t)(COUNT - index);
+        for (size_t inner = 0; inner < 7; ++inner) {
+            array[index].padding[inner] = (uint64_t)(index * 100U + inner);
+        }
+    }
+    assert_true(bc_core_sort_with_compare(array, COUNT, sizeof(struct64_t), less_than_uint64, NULL));
+    for (size_t index = 1; index < COUNT; ++index) {
+        assert_true(array[index - 1].key <= array[index].key);
+    }
+    free(array);
+}
+
+static void test_sort_mmap_buffer(void** state)
+{
+    BC_UNUSED(state);
+    enum { COUNT = 4096 };
+    uint64_t* array = mmap(NULL, sizeof(uint64_t) * COUNT, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    assert_true(array != MAP_FAILED);
+    for (size_t index = 0; index < COUNT; ++index) {
+        array[index] = (uint64_t)((COUNT - index) * 31U);
+    }
+    assert_true(bc_core_sort_with_compare(array, COUNT, sizeof(uint64_t), less_than_uint64, NULL));
+    for (size_t index = 1; index < COUNT; ++index) {
+        assert_true(array[index - 1] <= array[index]);
+    }
+    munmap(array, sizeof(uint64_t) * COUNT);
+}
+
 static void test_sort_pathological_input_triggers_heap_fallback(void** state)
 {
     BC_UNUSED(state);
@@ -305,6 +445,13 @@ int main(void)
         cmocka_unit_test(test_sort_rejects_zero_element_size),
         cmocka_unit_test(test_sort_null_base_with_count_zero),
         cmocka_unit_test(test_sort_null_base_with_count_one),
+        cmocka_unit_test(test_sort_element_size_4_uint32),
+        cmocka_unit_test(test_sort_element_size_8_uint64_already_sorted),
+        cmocka_unit_test(test_sort_element_size_16_pair),
+        cmocka_unit_test(test_sort_element_size_24_large_struct),
+        cmocka_unit_test(test_sort_element_size_32_struct),
+        cmocka_unit_test(test_sort_element_size_64_huge_struct),
+        cmocka_unit_test(test_sort_mmap_buffer),
         cmocka_unit_test(test_sort_pathological_input_triggers_heap_fallback),
         cmocka_unit_test(test_sort_many_duplicates_large),
         cmocka_unit_test(test_sort_null_base_with_count_many),
