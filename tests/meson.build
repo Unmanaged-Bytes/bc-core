@@ -315,6 +315,12 @@ test_bc_core_byte_mask = executable('test_bc_core_byte_mask',
 )
 test('byte_mask', test_bc_core_byte_mask)
 
+test_bc_core_thread_stress = executable('test_bc_core_thread_stress',
+    'test_bc_core_thread_stress.c',
+    dependencies : [bc_core_dep, cmocka_dep, dependency('threads')],
+)
+test('thread_stress', test_bc_core_thread_stress, timeout : 120)
+
 test_bc_core_writer_io_wrap = executable('test_bc_core_writer_io_wrap',
     'test_bc_core_writer_io_wrap.c',
     '../src/io/bc_core_writer.c',

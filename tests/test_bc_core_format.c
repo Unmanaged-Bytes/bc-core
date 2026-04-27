@@ -473,7 +473,7 @@ static void test_format_double_nan_capacity_too_small(void** state)
     BC_UNUSED(state);
     char buffer[2];
     size_t length = 0;
-    double nan_value = nan("");
+    double nan_value = __builtin_nan("");
     assert_false(bc_core_format_double(buffer, sizeof(buffer), nan_value, 0, &length));
 }
 
