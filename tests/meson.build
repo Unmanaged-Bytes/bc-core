@@ -41,6 +41,12 @@ test_bc_core_compare = executable('test_bc_core_compare',
     dependencies : [bc_core_dep, cmocka_dep],
 )
 
+test_bc_core_parse = executable('test_bc_core_parse',
+    'test_bc_core_parse.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('parse', test_bc_core_parse)
+
 test_bc_core_equal_case_insensitive_ascii = executable('test_bc_core_equal_case_insensitive_ascii',
     'test_bc_core_equal_case_insensitive_ascii.c',
     dependencies : [bc_core_dep, cmocka_dep],

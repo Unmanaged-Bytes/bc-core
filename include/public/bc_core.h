@@ -10,6 +10,7 @@
 #include "bc_core_io.h"
 #include "bc_core_math.h"
 #include "bc_core_memory.h"
+#include "bc_core_parse.h"
 #include "bc_core_sort.h"
 
 #endif /* BC_CORE_H */
