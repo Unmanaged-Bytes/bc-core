@@ -302,3 +302,27 @@ test_bc_core_sort = executable('test_bc_core_sort',
     dependencies : [bc_core_dep, cmocka_dep],
 )
 test('sort', test_bc_core_sort)
+
+test_bc_core_byte_mask = executable('test_bc_core_byte_mask',
+    'test_bc_core_byte_mask.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('byte_mask', test_bc_core_byte_mask)
+
+test_bc_core_writer_io_wrap = executable('test_bc_core_writer_io_wrap',
+    'test_bc_core_writer_io_wrap.c',
+    '../src/io/bc_core_writer.c',
+    include_directories : [bc_core_internal_inc],
+    dependencies : [bc_core_dep, cmocka_dep],
+    link_args : ['-Wl,--wrap=write'],
+)
+test('writer_io_wrap', test_bc_core_writer_io_wrap)
+
+test_bc_core_reader_io_wrap = executable('test_bc_core_reader_io_wrap',
+    'test_bc_core_reader_io_wrap.c',
+    '../src/io/bc_core_reader.c',
+    include_directories : [bc_core_internal_inc],
+    dependencies : [bc_core_dep, cmocka_dep],
+    link_args : ['-Wl,--wrap=read'],
+)
+test('reader_io_wrap', test_bc_core_reader_io_wrap)

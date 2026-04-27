@@ -123,20 +123,14 @@ bool bc_core_writer_write_bytes(bc_core_writer_t* writer, const void* data, size
             writer->error_latched = 1;
             return false;
         }
-        if (!bc_core_copy(writer->buffer + writer->position, data, len)) {
-            writer->error_latched = 1;
-            return false;
-        }
+        (void)bc_core_copy(writer->buffer + writer->position, data, len);
         writer->position += len;
         return true;
     }
 
     size_t remaining = writer->capacity - writer->position;
     if (len <= remaining) {
-        if (!bc_core_copy(writer->buffer + writer->position, data, len)) {
-            writer->error_latched = 1;
-            return false;
-        }
+        (void)bc_core_copy(writer->buffer + writer->position, data, len);
         writer->position += len;
         return true;
     }
@@ -146,10 +140,7 @@ bool bc_core_writer_write_bytes(bc_core_writer_t* writer, const void* data, size
     }
 
     if (len < writer->capacity) {
-        if (!bc_core_copy(writer->buffer, data, len)) {
-            writer->error_latched = 1;
-            return false;
-        }
+        (void)bc_core_copy(writer->buffer, data, len);
         writer->position = len;
         return true;
     }
@@ -187,10 +178,7 @@ bool bc_core_writer_write_unsigned_integer_64_decimal(bc_core_writer_t* writer, 
 {
     char scratch[21];
     size_t length = 0;
-    if (!bc_core_format_unsigned_integer_64_decimal(scratch, sizeof(scratch), value, &length)) {
-        writer->error_latched = 1;
-        return false;
-    }
+    (void)bc_core_format_unsigned_integer_64_decimal(scratch, sizeof(scratch), value, &length);
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
@@ -198,10 +186,7 @@ bool bc_core_writer_write_unsigned_integer_64_hexadecimal(bc_core_writer_t* writ
 {
     char scratch[16];
     size_t length = 0;
-    if (!bc_core_format_unsigned_integer_64_hexadecimal(scratch, sizeof(scratch), value, &length)) {
-        writer->error_latched = 1;
-        return false;
-    }
+    (void)bc_core_format_unsigned_integer_64_hexadecimal(scratch, sizeof(scratch), value, &length);
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
@@ -220,10 +205,7 @@ bool bc_core_writer_write_signed_integer_64(bc_core_writer_t* writer, int64_t va
 {
     char scratch[22];
     size_t length = 0;
-    if (!bc_core_format_signed_integer_64(scratch, sizeof(scratch), value, &length)) {
-        writer->error_latched = 1;
-        return false;
-    }
+    (void)bc_core_format_signed_integer_64(scratch, sizeof(scratch), value, &length);
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
@@ -242,10 +224,7 @@ bool bc_core_writer_write_bytes_human_readable(bc_core_writer_t* writer, uint64_
 {
     char scratch[32];
     size_t length = 0;
-    if (!bc_core_format_bytes_human_readable(scratch, sizeof(scratch), bytes, &length)) {
-        writer->error_latched = 1;
-        return false;
-    }
+    (void)bc_core_format_bytes_human_readable(scratch, sizeof(scratch), bytes, &length);
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
@@ -253,10 +232,7 @@ bool bc_core_writer_write_duration_nanoseconds(bc_core_writer_t* writer, uint64_
 {
     char scratch[32];
     size_t length = 0;
-    if (!bc_core_format_duration_nanoseconds(scratch, sizeof(scratch), nanoseconds, &length)) {
-        writer->error_latched = 1;
-        return false;
-    }
+    (void)bc_core_format_duration_nanoseconds(scratch, sizeof(scratch), nanoseconds, &length);
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
