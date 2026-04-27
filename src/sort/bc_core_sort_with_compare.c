@@ -3,6 +3,8 @@
 #include "bc_core_sort.h"
 #include "bc_core_memory.h"
 
+#include <stdint.h>
+
 #define BC_CORE_SORT_INSERTION_THRESHOLD ((size_t)16)
 
 static size_t bc_core_sort_log2_floor(size_t value)
@@ -13,6 +15,43 @@ static size_t bc_core_sort_log2_floor(size_t value)
         ++result;
     }
     return result;
+}
+
+__attribute__((always_inline)) static inline void bc_core_sort_swap_fast(unsigned char* a, unsigned char* b, size_t element_size)
+{
+    if (element_size == 8U) {
+        uint64_t buffer_a;
+        uint64_t buffer_b;
+        __builtin_memcpy(&buffer_a, a, 8U);
+        __builtin_memcpy(&buffer_b, b, 8U);
+        __builtin_memcpy(a, &buffer_b, 8U);
+        __builtin_memcpy(b, &buffer_a, 8U);
+        return;
+    }
+    if (element_size == 4U) {
+        uint32_t buffer_a;
+        uint32_t buffer_b;
+        __builtin_memcpy(&buffer_a, a, 4U);
+        __builtin_memcpy(&buffer_b, b, 4U);
+        __builtin_memcpy(a, &buffer_b, 4U);
+        __builtin_memcpy(b, &buffer_a, 4U);
+        return;
+    }
+    if (element_size <= 16U) {
+        unsigned char buffer[16];
+        __builtin_memcpy(buffer, a, element_size);
+        __builtin_memcpy(a, b, element_size);
+        __builtin_memcpy(b, buffer, element_size);
+        return;
+    }
+    if (element_size <= 32U) {
+        unsigned char buffer[32];
+        __builtin_memcpy(buffer, a, element_size);
+        __builtin_memcpy(a, b, element_size);
+        __builtin_memcpy(b, buffer, element_size);
+        return;
+    }
+    (void)bc_core_swap(a, b, element_size);
 }
 
 static void bc_core_sort_insertion(unsigned char* base, size_t count, size_t element_size, bc_core_sort_less_than_function less_than,
@@ -26,7 +65,7 @@ static void bc_core_sort_insertion(unsigned char* base, size_t count, size_t ele
             if (!less_than(current, previous, user_data)) {
                 break;
             }
-            (void)bc_core_swap(current, previous, element_size);
+            bc_core_sort_swap_fast(current, previous, element_size);
             --inner;
         }
     }
@@ -50,7 +89,7 @@ static void bc_core_sort_sift_down(unsigned char* base, size_t start, size_t end
         if (!less_than(root_pointer, child_pointer, user_data)) {
             return;
         }
-        (void)bc_core_swap(root_pointer, child_pointer, element_size);
+        bc_core_sort_swap_fast(root_pointer, child_pointer, element_size);
         root = child;
     }
 }
@@ -68,7 +107,7 @@ static void bc_core_sort_heap(unsigned char* base, size_t count, size_t element_
     size_t end = count - 1U;
     while (end > 0U) {
         unsigned char* end_pointer = base + end * element_size;
-        (void)bc_core_swap(base, end_pointer, element_size);
+        bc_core_sort_swap_fast(base, end_pointer, element_size);
         --end;
         bc_core_sort_sift_down(base, 0U, end, element_size, less_than, user_data);
     }
@@ -86,19 +125,19 @@ static void bc_core_sort_introsort(unsigned char* base, size_t count, size_t ele
 
         size_t pivot_index = count / 2U;
         unsigned char* last = base + (count - 1U) * element_size;
-        (void)bc_core_swap(base + pivot_index * element_size, last, element_size);
+        bc_core_sort_swap_fast(base + pivot_index * element_size, last, element_size);
 
         size_t store = 0;
         for (size_t scan = 0; scan < count - 1U; ++scan) {
             unsigned char* candidate = base + scan * element_size;
             if (less_than(candidate, last, user_data)) {
                 unsigned char* destination = base + store * element_size;
-                (void)bc_core_swap(candidate, destination, element_size);
+                bc_core_sort_swap_fast(candidate, destination, element_size);
                 store += 1U;
             }
         }
         unsigned char* pivot_final = base + store * element_size;
-        (void)bc_core_swap(pivot_final, last, element_size);
+        bc_core_sort_swap_fast(pivot_final, last, element_size);
 
         size_t left_count = store;
         size_t right_count = count - store - 1U;
