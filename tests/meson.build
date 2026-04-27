@@ -41,6 +41,12 @@ test_bc_core_compare = executable('test_bc_core_compare',
     dependencies : [bc_core_dep, cmocka_dep],
 )
 
+test_bc_core_equal_case_insensitive_ascii = executable('test_bc_core_equal_case_insensitive_ascii',
+    'test_bc_core_equal_case_insensitive_ascii.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('equal_case_insensitive_ascii', test_bc_core_equal_case_insensitive_ascii)
+
 test_bc_core_compare_alignment = executable('test_bc_core_compare_alignment',
     'test_bc_core_compare_alignment.c',
     dependencies : [bc_core_dep, cmocka_dep],
