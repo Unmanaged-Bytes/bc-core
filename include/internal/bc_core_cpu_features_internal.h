@@ -8,6 +8,8 @@
 typedef struct {
     bool has_sse2;
     bool has_avx2;
+    bool has_avx512f;
+    bool has_avx512bw;
     bool has_sse42;
     bool has_aes;
     bool has_pclmul;
