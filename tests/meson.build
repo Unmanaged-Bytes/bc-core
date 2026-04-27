@@ -333,6 +333,18 @@ test_bc_core_writer_extensions = executable('test_bc_core_writer_extensions',
 )
 test('writer_extensions', test_bc_core_writer_extensions)
 
+test_bc_core_format_double_shortest_round_trip = executable('test_bc_core_format_double_shortest_round_trip',
+    'test_bc_core_format_double_shortest_round_trip.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('format_double_shortest_round_trip', test_bc_core_format_double_shortest_round_trip)
+
+test_bc_core_writer_write_double_shortest_round_trip = executable('test_bc_core_writer_write_double_shortest_round_trip',
+    'test_bc_core_writer_write_double_shortest_round_trip.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('writer_write_double_shortest_round_trip', test_bc_core_writer_write_double_shortest_round_trip)
+
 test_bc_core_sort = executable('test_bc_core_sort',
     'test_bc_core_sort.c',
     dependencies : [bc_core_dep, cmocka_dep],

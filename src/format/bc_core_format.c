@@ -3,6 +3,7 @@
 #include "bc_core_format.h"
 
 #include <math.h>
+#include <stdio.h>
 
 bool bc_core_format_unsigned_integer_64_decimal(char* buffer, size_t capacity, uint64_t value, size_t* out_length)
 {
@@ -203,6 +204,24 @@ bool bc_core_format_double(char* buffer, size_t capacity, double value, int frac
     }
 
     *out_length = position;
+    return true;
+}
+
+bool bc_core_format_double_shortest_round_trip(char* buffer, size_t capacity, double value, size_t* out_length)
+{
+    if (capacity == 0U) {
+        return false;
+    }
+
+    int written = snprintf(buffer, capacity, "%.17g", value);
+    if (written < 0) {
+        return false;
+    }
+    if ((size_t)written >= capacity) {
+        return false;
+    }
+
+    *out_length = (size_t)written;
     return true;
 }
 
