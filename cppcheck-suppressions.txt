@@ -18,12 +18,17 @@ unusedFunction:*/hash/bc_core_hash_sha256.c
 unusedFunction:*/cpu/bc_core_cpu.c
 unusedFunction:*/cpu/bc_core_cpu_prefetch.c
 unusedFunction:*/cpu/bc_core_cache_sizes.c
+unusedFunction:*/error/bc_core_error.c
+unusedFunction:*/format/bc_core_format.c
 unusedFunction:*/hash/bc_core_hash_crc32c.c
+unusedFunction:*/io/bc_core_reader.c
+unusedFunction:*/io/bc_core_writer.c
 unusedFunction:*/memory/bc_core_ascii.c
 unusedFunction:*/memory/bc_core_compare.c
 unusedFunction:*/memory/bc_core_contains.c
 unusedFunction:*/memory/bc_core_copy.c
 unusedFunction:*/memory/bc_core_count.c
+unusedFunction:*/memory/bc_core_equal_case_insensitive_ascii.c
 unusedFunction:*/memory/bc_core_fill.c
 unusedFunction:*/memory/bc_core_find.c
 unusedFunction:*/memory/bc_core_length.c
@@ -31,6 +36,8 @@ unusedFunction:*/memory/bc_core_move.c
 unusedFunction:*/memory/bc_core_swap.c
 unusedFunction:*/memory/bc_core_zero.c
 unusedFunction:*/memory/bc_core_zero_secure.c
+unusedFunction:*/parse/bc_core_parse.c
+unusedFunction:*/sort/bc_core_sort_with_compare.c
 
 // --- Inline helpers in public headers consumed downstream ---
 unusedFunction:*/bc_core_math.h
@@ -38,6 +45,9 @@ unusedFunction:*/bc_core_math.h
 // --- Linker wrap hooks in tests (invoked via -Wl,--wrap=) ---
 unusedFunction:*tests/*_wrap.c
 unusedFunction:*/tests/*_wrap.c
+
+// --- __has_include not understood by cppcheck 2.17+ ---
+preprocessorErrorDirective:*/tests/test_bc_core_huge_inputs.c
 
 // --- Allow suppression entries that may not match on every cppcheck
 //     version / include path layout (CI vs local) ---
