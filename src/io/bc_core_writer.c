@@ -229,6 +229,17 @@ bool bc_core_writer_write_double(bc_core_writer_t* writer, double value, int fra
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
+bool bc_core_writer_write_double_shortest_round_trip(bc_core_writer_t* writer, double value)
+{
+    char scratch[32];
+    size_t length = 0;
+    if (!bc_core_format_double_shortest_round_trip(scratch, sizeof(scratch), value, &length)) {
+        writer->error_latched = 1;
+        return false;
+    }
+    return bc_core_writer_write_bytes(writer, scratch, length);
+}
+
 bool bc_core_writer_write_bytes_human_readable(bc_core_writer_t* writer, uint64_t bytes)
 {
     char scratch[32];
