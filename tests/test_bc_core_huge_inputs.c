@@ -25,11 +25,16 @@
 
 static void* allocate_huge(size_t length)
 {
+#if defined(__SANITIZE_THREAD__)
+    BC_UNUSED(length);
+    return NULL;
+#else
     void* mapping = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (mapping == MAP_FAILED) {
         return NULL;
     }
     return mapping;
+#endif
 }
 
 static void release_huge(void* mapping, size_t length)
