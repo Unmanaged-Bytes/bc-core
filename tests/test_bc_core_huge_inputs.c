@@ -13,6 +13,12 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#if defined(__has_include) && __has_include(<valgrind/valgrind.h>)
+#include <valgrind/valgrind.h>
+#else
+#define RUNNING_ON_VALGRIND 0
+#endif
+
 #define BC_HUGE_SIZE_BELOW_INT_MAX ((size_t)2147483647U)
 #define BC_HUGE_SIZE_ABOVE_INT_MAX ((size_t)2147483648U)
 #define BC_HUGE_SIZE_BIG ((size_t)2400U * 1024U * 1024U)
@@ -187,6 +193,10 @@ static void test_huge_count_byte_above_int_max(void** state)
 static void test_huge_sha256_above_int_max(void** state)
 {
     BC_UNUSED(state);
+    if (RUNNING_ON_VALGRIND) {
+        skip();
+        return;
+    }
     void* buffer = allocate_huge(BC_HUGE_SIZE_BIG);
     if (buffer == NULL) {
         skip();
