@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <time.h>
 
@@ -46,14 +47,23 @@ static void bench_copy(const char* label, size_t size, size_t iters)
         src[i] = (uint8_t)(i & 0xff);
     }
 
-    uint64_t t0 = now_ns();
+    uint64_t bc_t0 = now_ns();
     for (size_t i = 0; i < iters; i++) {
         bc_core_copy(dst, src, size);
     }
-    uint64_t elapsed = now_ns() - t0;
+    uint64_t bc_elapsed = now_ns() - bc_t0;
 
-    double gbps = (double)(size * iters) / (double)elapsed;
-    printf("  copy %-8s  %6.1f ns/op  %5.1f GB/s\n", label, (double)elapsed / (double)iters, gbps);
+    uint64_t libc_t0 = now_ns();
+    for (size_t i = 0; i < iters; i++) {
+        memcpy(dst, src, size);
+    }
+    uint64_t libc_elapsed = now_ns() - libc_t0;
+
+    double bc_gbps = (double)(size * iters) / (double)bc_elapsed;
+    double libc_gbps = (double)(size * iters) / (double)libc_elapsed;
+    double ratio = (double)libc_elapsed / (double)bc_elapsed;
+    printf("  copy %-8s  bc=%6.1f ns/op (%5.1f GB/s)  memcpy=%6.1f ns/op (%5.1f GB/s)  ratio=%4.2fx\n", label,
+           (double)bc_elapsed / (double)iters, bc_gbps, (double)libc_elapsed / (double)iters, libc_gbps, ratio);
 
     bench_free(src, size);
     bench_free(dst, size);
@@ -65,14 +75,23 @@ static void bench_fill(const char* label, size_t size, size_t iters)
 {
     uint8_t* dst = bench_alloc(size);
 
-    uint64_t t0 = now_ns();
+    uint64_t bc_t0 = now_ns();
     for (size_t i = 0; i < iters; i++) {
         bc_core_fill(dst, size, 0xAB);
     }
-    uint64_t elapsed = now_ns() - t0;
+    uint64_t bc_elapsed = now_ns() - bc_t0;
 
-    double gbps = (double)(size * iters) / (double)elapsed;
-    printf("  fill %-8s  %6.1f ns/op  %5.1f GB/s\n", label, (double)elapsed / (double)iters, gbps);
+    uint64_t libc_t0 = now_ns();
+    for (size_t i = 0; i < iters; i++) {
+        memset(dst, 0xAB, size);
+    }
+    uint64_t libc_elapsed = now_ns() - libc_t0;
+
+    double bc_gbps = (double)(size * iters) / (double)bc_elapsed;
+    double libc_gbps = (double)(size * iters) / (double)libc_elapsed;
+    double ratio = (double)libc_elapsed / (double)bc_elapsed;
+    printf("  fill %-8s  bc=%6.1f ns/op (%5.1f GB/s)  memset=%6.1f ns/op (%5.1f GB/s)  ratio=%4.2fx\n", label,
+           (double)bc_elapsed / (double)iters, bc_gbps, (double)libc_elapsed / (double)iters, libc_gbps, ratio);
 
     bench_free(dst, size);
 }
@@ -83,14 +102,23 @@ static void bench_zero(const char* label, size_t size, size_t iters)
 {
     uint8_t* dst = bench_alloc(size);
 
-    uint64_t t0 = now_ns();
+    uint64_t bc_t0 = now_ns();
     for (size_t i = 0; i < iters; i++) {
         bc_core_zero(dst, size);
     }
-    uint64_t elapsed = now_ns() - t0;
+    uint64_t bc_elapsed = now_ns() - bc_t0;
 
-    double gbps = (double)(size * iters) / (double)elapsed;
-    printf("  zero %-8s  %6.1f ns/op  %5.1f GB/s\n", label, (double)elapsed / (double)iters, gbps);
+    uint64_t libc_t0 = now_ns();
+    for (size_t i = 0; i < iters; i++) {
+        memset(dst, 0, size);
+    }
+    uint64_t libc_elapsed = now_ns() - libc_t0;
+
+    double bc_gbps = (double)(size * iters) / (double)bc_elapsed;
+    double libc_gbps = (double)(size * iters) / (double)libc_elapsed;
+    double ratio = (double)libc_elapsed / (double)bc_elapsed;
+    printf("  zero %-8s  bc=%6.1f ns/op (%5.1f GB/s)  memset0=%6.1f ns/op (%5.1f GB/s)  ratio=%4.2fx\n", label,
+           (double)bc_elapsed / (double)iters, bc_gbps, (double)libc_elapsed / (double)iters, libc_gbps, ratio);
 
     bench_free(dst, size);
 }
@@ -143,14 +171,23 @@ static void bench_move_nooverlap(const char* label, size_t size, size_t iters)
         src[i] = (uint8_t)(i & 0xff);
     }
 
-    uint64_t t0 = now_ns();
+    uint64_t bc_t0 = now_ns();
     for (size_t i = 0; i < iters; i++) {
         bc_core_move(dst, src, size);
     }
-    uint64_t elapsed = now_ns() - t0;
+    uint64_t bc_elapsed = now_ns() - bc_t0;
 
-    double gbps = (double)(size * iters) / (double)elapsed;
-    printf("  move_nooverlap %-2s  %6.1f ns/op  %5.1f GB/s\n", label, (double)elapsed / (double)iters, gbps);
+    uint64_t libc_t0 = now_ns();
+    for (size_t i = 0; i < iters; i++) {
+        memmove(dst, src, size);
+    }
+    uint64_t libc_elapsed = now_ns() - libc_t0;
+
+    double bc_gbps = (double)(size * iters) / (double)bc_elapsed;
+    double libc_gbps = (double)(size * iters) / (double)libc_elapsed;
+    double ratio = (double)libc_elapsed / (double)bc_elapsed;
+    printf("  move_nooverlap %-2s  bc=%6.1f ns/op (%5.1f GB/s)  memmove=%6.1f ns/op (%5.1f GB/s)  ratio=%4.2fx\n", label,
+           (double)bc_elapsed / (double)iters, bc_gbps, (double)libc_elapsed / (double)iters, libc_gbps, ratio);
 
     bench_free(src, size);
     bench_free(dst, size);
@@ -167,13 +204,25 @@ static void bench_length(void)
     buf[sizeof(buf) - 1] = '\0';
 
     size_t out = 0;
-    uint64_t t0 = now_ns();
+    uint64_t bc_t0 = now_ns();
     for (size_t i = 0; i < ITERS; i++) {
         bc_core_length(buf, '\0', &out);
     }
-    uint64_t elapsed = now_ns() - t0;
+    uint64_t bc_elapsed = now_ns() - bc_t0;
 
-    printf("  length 1KB     %6.1f ns/op  result=%zu\n", (double)elapsed / ITERS, out);
+    size_t libc_out = 0;
+    char* buf_ptr = buf;
+    uint64_t libc_t0 = now_ns();
+    for (size_t i = 0; i < ITERS; i++) {
+        __asm__ volatile("" : "+r"(buf_ptr));
+        libc_out = strlen(buf_ptr);
+        __asm__ volatile("" : "+r"(libc_out));
+    }
+    uint64_t libc_elapsed = now_ns() - libc_t0;
+
+    double ratio = (double)libc_elapsed / (double)bc_elapsed;
+    printf("  length 1KB     bc=%6.1f ns/op  strlen=%6.1f ns/op  ratio=%4.2fx  result=%zu/%zu\n", (double)bc_elapsed / ITERS,
+           (double)libc_elapsed / ITERS, ratio, out, libc_out);
 }
 
 /* ===== find ===== */
@@ -187,13 +236,25 @@ static void bench_find_byte(void)
     buf[KB4 - 1] = 0xff;
 
     size_t pos = 0;
-    uint64_t t0 = now_ns();
+    uint64_t bc_t0 = now_ns();
     for (size_t i = 0; i < ITERS; i++) {
         bc_core_find_byte(buf, KB4, 0xff, &pos);
     }
-    uint64_t elapsed = now_ns() - t0;
+    uint64_t bc_elapsed = now_ns() - bc_t0;
 
-    printf("  find_byte 4KB (last)       %6.1f ns/op  pos=%zu\n", (double)elapsed / ITERS, pos);
+    void* libc_pos = NULL;
+    uint8_t* buf_ptr = buf;
+    uint64_t libc_t0 = now_ns();
+    for (size_t i = 0; i < ITERS; i++) {
+        __asm__ volatile("" : "+r"(buf_ptr));
+        libc_pos = memchr(buf_ptr, 0xff, KB4);
+        __asm__ volatile("" : "+r"(libc_pos));
+    }
+    uint64_t libc_elapsed = now_ns() - libc_t0;
+
+    double ratio = (double)libc_elapsed / (double)bc_elapsed;
+    printf("  find_byte 4KB (last)       bc=%6.1f ns/op  memchr=%6.1f ns/op  ratio=%4.2fx  pos=%zu/%p\n", (double)bc_elapsed / ITERS,
+           (double)libc_elapsed / ITERS, ratio, pos, libc_pos);
 }
 
 static void bench_find_last_byte(void)
@@ -205,13 +266,25 @@ static void bench_find_last_byte(void)
     buf[0] = 0xff;
 
     size_t pos = 0;
-    uint64_t t0 = now_ns();
+    uint64_t bc_t0 = now_ns();
     for (size_t i = 0; i < ITERS; i++) {
         bc_core_find_last_byte(buf, KB4, 0xff, &pos);
     }
-    uint64_t elapsed = now_ns() - t0;
+    uint64_t bc_elapsed = now_ns() - bc_t0;
 
-    printf("  find_last_byte 4KB (first) %6.1f ns/op  pos=%zu\n", (double)elapsed / ITERS, pos);
+    void* libc_pos = NULL;
+    uint8_t* buf_ptr = buf;
+    uint64_t libc_t0 = now_ns();
+    for (size_t i = 0; i < ITERS; i++) {
+        __asm__ volatile("" : "+r"(buf_ptr));
+        libc_pos = memrchr(buf_ptr, 0xff, KB4);
+        __asm__ volatile("" : "+r"(libc_pos));
+    }
+    uint64_t libc_elapsed = now_ns() - libc_t0;
+
+    double ratio = (double)libc_elapsed / (double)bc_elapsed;
+    printf("  find_last_byte 4KB (first) bc=%6.1f ns/op  memrchr=%6.1f ns/op  ratio=%4.2fx  pos=%zu/%p\n", (double)bc_elapsed / ITERS,
+           (double)libc_elapsed / ITERS, ratio, pos, libc_pos);
 }
 
 static void bench_find_any_byte(void)
@@ -288,14 +361,26 @@ static void bench_compare(const char* label, size_t size, size_t iters)
     }
 
     int result = 0;
-    uint64_t t0 = now_ns();
+    uint64_t bc_t0 = now_ns();
     for (size_t i = 0; i < iters; i++) {
         bc_core_compare(a, b, size, &result);
     }
-    uint64_t elapsed = now_ns() - t0;
+    uint64_t bc_elapsed = now_ns() - bc_t0;
 
-    double gbps = (double)(size * iters) / (double)elapsed;
-    printf("  compare %-6s  %6.1f ns/op  %5.1f GB/s  result=%d\n", label, (double)elapsed / (double)iters, gbps, result);
+    int libc_result = 0;
+    uint64_t libc_t0 = now_ns();
+    for (size_t i = 0; i < iters; i++) {
+        __asm__ volatile("" : "+r"(a), "+r"(b));
+        libc_result ^= memcmp(a, b, size);
+        __asm__ volatile("" : "+r"(libc_result));
+    }
+    uint64_t libc_elapsed = now_ns() - libc_t0;
+
+    double bc_gbps = (double)(size * iters) / (double)bc_elapsed;
+    double libc_gbps = (double)(size * iters) / (double)libc_elapsed;
+    double ratio = (double)libc_elapsed / (double)bc_elapsed;
+    printf("  compare %-6s  bc=%6.1f ns/op (%5.1f GB/s)  memcmp=%6.1f ns/op (%5.1f GB/s)  ratio=%4.2fx  result=%d/%d\n", label,
+           (double)bc_elapsed / (double)iters, bc_gbps, (double)libc_elapsed / (double)iters, libc_gbps, ratio, result, libc_result);
 
     bench_free(a, size);
     bench_free(b, size);
@@ -335,13 +420,26 @@ static void bench_find_pattern(void)
     bc_core_copy(buf + KB4 - 6, pattern, 6);
 
     size_t pos = 0;
-    uint64_t t0 = now_ns();
+    uint64_t bc_t0 = now_ns();
     for (size_t i = 0; i < ITERS; i++) {
         bc_core_find_pattern(buf, KB4, pattern, 6, &pos);
     }
-    uint64_t elapsed = now_ns() - t0;
+    uint64_t bc_elapsed = now_ns() - bc_t0;
 
-    printf("  find_pattern 4KB (end)     %6.1f ns/op  pos=%zu\n", (double)elapsed / ITERS, pos);
+    void* libc_pos = NULL;
+    uint8_t* buf_ptr = buf;
+    const uint8_t* pattern_ptr = pattern;
+    uint64_t libc_t0 = now_ns();
+    for (size_t i = 0; i < ITERS; i++) {
+        __asm__ volatile("" : "+r"(buf_ptr), "+r"(pattern_ptr));
+        libc_pos = memmem(buf_ptr, KB4, pattern_ptr, 6);
+        __asm__ volatile("" : "+r"(libc_pos));
+    }
+    uint64_t libc_elapsed = now_ns() - libc_t0;
+
+    double ratio = (double)libc_elapsed / (double)bc_elapsed;
+    printf("  find_pattern 4KB (end)     bc=%6.1f ns/op  memmem=%6.1f ns/op  ratio=%4.2fx  pos=%zu/%p\n", (double)bc_elapsed / ITERS,
+           (double)libc_elapsed / ITERS, ratio, pos, libc_pos);
 }
 
 /* ===== count_words ===== */
@@ -403,14 +501,28 @@ static void bench_equal(void)
     }
 
     bool eq = false;
-    uint64_t t0 = now_ns();
+    uint64_t bc_t0 = now_ns();
     for (size_t i = 0; i < ITERS; i++) {
         bc_core_equal(a, b, KB4, &eq);
     }
-    uint64_t elapsed = now_ns() - t0;
+    uint64_t bc_elapsed = now_ns() - bc_t0;
 
-    double gbps = (double)(KB4 * (uint64_t)ITERS) / (double)elapsed;
-    printf("  equal 4KB      %6.1f ns/op  %5.1f GB/s  eq=%d\n", (double)elapsed / ITERS, gbps, eq);
+    int libc_eq = 0;
+    uint8_t* a_ptr = a;
+    uint8_t* b_ptr = b;
+    uint64_t libc_t0 = now_ns();
+    for (size_t i = 0; i < ITERS; i++) {
+        __asm__ volatile("" : "+r"(a_ptr), "+r"(b_ptr));
+        libc_eq ^= (memcmp(a_ptr, b_ptr, KB4) == 0);
+        __asm__ volatile("" : "+r"(libc_eq));
+    }
+    uint64_t libc_elapsed = now_ns() - libc_t0;
+
+    double bc_gbps = (double)(KB4 * (uint64_t)ITERS) / (double)bc_elapsed;
+    double libc_gbps = (double)(KB4 * (uint64_t)ITERS) / (double)libc_elapsed;
+    double ratio = (double)libc_elapsed / (double)bc_elapsed;
+    printf("  equal 4KB      bc=%6.1f ns/op (%5.1f GB/s)  memcmp=%6.1f ns/op (%5.1f GB/s)  ratio=%4.2fx  eq=%d/%d\n",
+           (double)bc_elapsed / ITERS, bc_gbps, (double)libc_elapsed / ITERS, libc_gbps, ratio, eq, libc_eq);
 }
 
 /* ===== crc32c ===== */
