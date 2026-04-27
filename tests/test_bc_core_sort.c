@@ -230,6 +230,182 @@ static void test_sort_rejects_zero_element_size(void** state)
     assert_false(bc_core_sort_with_compare(array, 3, 0, less_than_int32, NULL));
 }
 
+static bool less_than_first_byte(const void* left, const void* right, void* user_data)
+{
+    BC_UNUSED(user_data);
+    return *(const unsigned char*)left < *(const unsigned char*)right;
+}
+
+static void run_sort_arbitrary_element_size(size_t element_size)
+{
+    enum { COUNT = 256 };
+    unsigned char* array = malloc(element_size * COUNT);
+    assert_non_null(array);
+    /* First byte = key (descending in input), remaining bytes carry payload identity */
+    for (size_t index = 0; index < COUNT; ++index) {
+        unsigned char* element = array + index * element_size;
+        element[0] = (unsigned char)(255U - index);
+        for (size_t inner = 1; inner < element_size; ++inner) {
+            element[inner] = (unsigned char)((index * 7U + inner) & 0xFFU);
+        }
+    }
+    assert_true(bc_core_sort_with_compare(array, COUNT, element_size, less_than_first_byte, NULL));
+    for (size_t index = 1; index < COUNT; ++index) {
+        unsigned char prev_key = array[(index - 1) * element_size];
+        unsigned char curr_key = array[index * element_size];
+        assert_true(prev_key <= curr_key);
+    }
+    free(array);
+}
+
+static void test_sort_element_size_1(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(1);
+}
+
+static void test_sort_element_size_2(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(2);
+}
+
+static void test_sort_element_size_3(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(3);
+}
+
+static void test_sort_element_size_5(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(5);
+}
+
+static void test_sort_element_size_6(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(6);
+}
+
+static void test_sort_element_size_7(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(7);
+}
+
+static void test_sort_element_size_9(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(9);
+}
+
+static void test_sort_element_size_10(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(10);
+}
+
+static void test_sort_element_size_11(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(11);
+}
+
+static void test_sort_element_size_13(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(13);
+}
+
+static void test_sort_element_size_15(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(15);
+}
+
+static void test_sort_element_size_17(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(17);
+}
+
+static void test_sort_element_size_23(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(23);
+}
+
+static void test_sort_element_size_31(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(31);
+}
+
+static void test_sort_element_size_33(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(33);
+}
+
+static void test_sort_element_size_41(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(41);
+}
+
+static void test_sort_element_size_63(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(63);
+}
+
+static void test_sort_element_size_65(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(65);
+}
+
+static void test_sort_element_size_100(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(100);
+}
+
+static void test_sort_element_size_127(void** state)
+{
+    BC_UNUSED(state);
+    run_sort_arbitrary_element_size(127);
+}
+
+static void test_sort_element_size_payload_integrity(void** state)
+{
+    BC_UNUSED(state);
+    /* Verify that for non-power-of-2 sizes, the payload bytes travel with the key */
+    typedef struct {
+        unsigned char key;
+        unsigned char tag[6]; /* 7-byte struct, hits the <=16 path */
+    } seven_byte_struct_t;
+    enum { COUNT = 64 };
+    seven_byte_struct_t array[COUNT];
+    for (size_t index = 0; index < COUNT; ++index) {
+        array[index].key = (unsigned char)(COUNT - index);
+        for (size_t inner = 0; inner < 6; ++inner) {
+            array[index].tag[inner] = (unsigned char)(index * 7U + inner);
+        }
+    }
+    assert_true(bc_core_sort_with_compare(array, COUNT, sizeof(seven_byte_struct_t), less_than_first_byte, NULL));
+    /* Recover original index from sorted key (key = COUNT - original_index) */
+    for (size_t index = 0; index < COUNT; ++index) {
+        unsigned char key_value = array[index].key;
+        unsigned char original_index = (unsigned char)(COUNT - key_value);
+        for (size_t inner = 0; inner < 6; ++inner) {
+            unsigned char expected = (unsigned char)((size_t)original_index * 7U + inner);
+            assert_int_equal(array[index].tag[inner], expected);
+        }
+    }
+}
+
 static void test_sort_null_base_with_count_zero(void** state)
 {
     BC_UNUSED(state);
@@ -443,6 +619,27 @@ int main(void)
         cmocka_unit_test(test_sort_user_data_passed_through),
         cmocka_unit_test(test_sort_rejects_null_compare),
         cmocka_unit_test(test_sort_rejects_zero_element_size),
+        cmocka_unit_test(test_sort_element_size_1),
+        cmocka_unit_test(test_sort_element_size_2),
+        cmocka_unit_test(test_sort_element_size_3),
+        cmocka_unit_test(test_sort_element_size_5),
+        cmocka_unit_test(test_sort_element_size_6),
+        cmocka_unit_test(test_sort_element_size_7),
+        cmocka_unit_test(test_sort_element_size_9),
+        cmocka_unit_test(test_sort_element_size_10),
+        cmocka_unit_test(test_sort_element_size_11),
+        cmocka_unit_test(test_sort_element_size_13),
+        cmocka_unit_test(test_sort_element_size_15),
+        cmocka_unit_test(test_sort_element_size_17),
+        cmocka_unit_test(test_sort_element_size_23),
+        cmocka_unit_test(test_sort_element_size_31),
+        cmocka_unit_test(test_sort_element_size_33),
+        cmocka_unit_test(test_sort_element_size_41),
+        cmocka_unit_test(test_sort_element_size_63),
+        cmocka_unit_test(test_sort_element_size_65),
+        cmocka_unit_test(test_sort_element_size_100),
+        cmocka_unit_test(test_sort_element_size_127),
+        cmocka_unit_test(test_sort_element_size_payload_integrity),
         cmocka_unit_test(test_sort_null_base_with_count_zero),
         cmocka_unit_test(test_sort_null_base_with_count_one),
         cmocka_unit_test(test_sort_element_size_4_uint32),
