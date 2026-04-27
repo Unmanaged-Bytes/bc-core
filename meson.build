@@ -66,6 +66,7 @@ pkg.generate(
 install_headers(
   'include/public/bc_core.h',
   'include/public/bc_core_cpu.h',
+  'include/public/bc_core_error.h',
   'include/public/bc_core_hash.h',
   'include/public/bc_core_io.h',
   'include/public/bc_core_math.h',

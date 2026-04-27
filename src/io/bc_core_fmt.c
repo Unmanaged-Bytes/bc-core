@@ -298,3 +298,51 @@ bool bc_core_fmt_duration_ns(char* buffer, size_t capacity, uint64_t nanoseconds
     *out_length = position;
     return true;
 }
+
+static void write_four_uppercase_hex(char* destination, uint32_t value)
+{
+    static const char digits[] = "0123456789ABCDEF";
+    destination[0] = digits[(value >> 12) & 0xFU];
+    destination[1] = digits[(value >> 8) & 0xFU];
+    destination[2] = digits[(value >> 4) & 0xFU];
+    destination[3] = digits[value & 0xFU];
+}
+
+bool bc_core_fmt_unicode_codepoint_escape(char* buffer, size_t capacity, uint32_t codepoint, size_t* out_length)
+{
+    if (buffer == NULL || out_length == NULL) {
+        return false;
+    }
+    if (codepoint > 0x10FFFFU) {
+        return false;
+    }
+    if (codepoint >= 0xD800U && codepoint <= 0xDFFFU) {
+        return false;
+    }
+
+    if (codepoint <= 0xFFFFU) {
+        if (capacity < 6U) {
+            return false;
+        }
+        buffer[0] = '\\';
+        buffer[1] = 'u';
+        write_four_uppercase_hex(buffer + 2, codepoint);
+        *out_length = 6U;
+        return true;
+    }
+
+    if (capacity < 12U) {
+        return false;
+    }
+    uint32_t adjusted = codepoint - 0x10000U;
+    uint32_t high_surrogate = ((adjusted >> 10) & 0x3FFU) + 0xD800U;
+    uint32_t low_surrogate = (adjusted & 0x3FFU) + 0xDC00U;
+    buffer[0] = '\\';
+    buffer[1] = 'u';
+    write_four_uppercase_hex(buffer + 2, high_surrogate);
+    buffer[6] = '\\';
+    buffer[7] = 'u';
+    write_four_uppercase_hex(buffer + 8, low_surrogate);
+    *out_length = 12U;
+    return true;
+}

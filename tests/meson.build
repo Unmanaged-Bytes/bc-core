@@ -284,3 +284,15 @@ test_bc_core_reader = executable('test_bc_core_reader',
     dependencies : [bc_core_dep, cmocka_dep],
 )
 test('reader', test_bc_core_reader)
+
+test_bc_core_error = executable('test_bc_core_error',
+    'test_bc_core_error.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('error', test_bc_core_error)
+
+test_bc_core_writer_extensions = executable('test_bc_core_writer_extensions',
+    'test_bc_core_writer_extensions.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('writer_extensions', test_bc_core_writer_extensions)

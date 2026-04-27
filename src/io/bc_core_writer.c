@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "bc_core_io.h"
+#include "bc_core_error.h"
 #include "bc_core_memory.h"
 
 #include <errno.h>
@@ -40,15 +41,51 @@ bool bc_core_writer_init(bc_core_writer_t* writer, int fd, char* buffer, size_t 
     return true;
 }
 
+bool bc_core_writer_init_standard_error(bc_core_writer_t* writer, char* buffer, size_t capacity)
+{
+    return bc_core_writer_init(writer, STDERR_FILENO, buffer, capacity);
+}
+
+bool bc_core_writer_init_standard_output(bc_core_writer_t* writer, char* buffer, size_t capacity)
+{
+    return bc_core_writer_init(writer, STDOUT_FILENO, buffer, capacity);
+}
+
+bool bc_core_writer_init_buffer_only(bc_core_writer_t* writer, char* buffer, size_t capacity)
+{
+    if (buffer == NULL || capacity == 0) {
+        return false;
+    }
+    writer->fd = -1;
+    writer->error_latched = 0;
+    writer->buffer = buffer;
+    writer->capacity = capacity;
+    writer->position = 0;
+    return true;
+}
+
 bool bc_core_writer_has_error(const bc_core_writer_t* writer)
 {
     return writer->error_latched != 0;
+}
+
+bool bc_core_writer_buffer_data(const bc_core_writer_t* writer, const char** out_data, size_t* out_length)
+{
+    if (out_data == NULL || out_length == NULL) {
+        return false;
+    }
+    *out_data = writer->buffer;
+    *out_length = writer->position;
+    return true;
 }
 
 bool bc_core_writer_flush(bc_core_writer_t* writer)
 {
     if (writer->error_latched) {
         return false;
+    }
+    if (writer->fd < 0) {
+        return true;
     }
     if (writer->position == 0) {
         return true;
@@ -77,6 +114,19 @@ bool bc_core_writer_write_bytes(bc_core_writer_t* writer, const void* data, size
         return false;
     }
     if (len == 0) {
+        return true;
+    }
+
+    if (writer->fd < 0) {
+        if (len > writer->capacity - writer->position) {
+            writer->error_latched = 1;
+            return false;
+        }
+        if (!bc_core_copy(writer->buffer + writer->position, data, len)) {
+            writer->error_latched = 1;
+            return false;
+        }
+        writer->position += len;
         return true;
     }
 
@@ -114,6 +164,14 @@ bool bc_core_writer_write_char(bc_core_writer_t* writer, char value)
 {
     if (writer->error_latched) {
         return false;
+    }
+    if (writer->fd < 0) {
+        if (writer->position == writer->capacity) {
+            writer->error_latched = 1;
+            return false;
+        }
+        writer->buffer[writer->position++] = value;
+        return true;
     }
     if (writer->position == writer->capacity) {
         if (!bc_core_writer_flush(writer)) {
@@ -195,6 +253,31 @@ bool bc_core_writer_write_duration_ns(bc_core_writer_t* writer, uint64_t nanosec
     char scratch[32];
     size_t length = 0;
     if (!bc_core_fmt_duration_ns(scratch, sizeof(scratch), nanoseconds, &length)) {
+        writer->error_latched = 1;
+        return false;
+    }
+    return bc_core_writer_write_bytes(writer, scratch, length);
+}
+
+bool bc_core_writer_write_error_description(bc_core_writer_t* writer, bc_core_error_code_t code)
+{
+    if (writer->error_latched) {
+        return false;
+    }
+    char scratch[128];
+    size_t length = 0;
+    if (!bc_core_error_describe(code, scratch, sizeof(scratch), &length)) {
+        writer->error_latched = 1;
+        return false;
+    }
+    return bc_core_writer_write_bytes(writer, scratch, length);
+}
+
+bool bc_core_writer_write_unicode_codepoint_escape(bc_core_writer_t* writer, uint32_t codepoint)
+{
+    char scratch[12];
+    size_t length = 0;
+    if (!bc_core_fmt_unicode_codepoint_escape(scratch, sizeof(scratch), codepoint, &length)) {
         writer->error_latched = 1;
         return false;
     }

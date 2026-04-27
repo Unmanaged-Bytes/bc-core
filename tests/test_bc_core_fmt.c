@@ -229,6 +229,147 @@ static void test_fmt_duration_ns(void** state)
     assert_memory_equal(buffer, "3.500s", length);
 }
 
+static void test_fmt_unicode_codepoint_escape_ascii(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x41U, &length));
+    assert_int_equal(length, 6);
+    assert_memory_equal(buffer, "\\u0041", 6);
+}
+
+static void test_fmt_unicode_codepoint_escape_zero(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0000U, &length));
+    assert_int_equal(length, 6);
+    assert_memory_equal(buffer, "\\u0000", 6);
+}
+
+static void test_fmt_unicode_codepoint_escape_bmp(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x00E9U, &length));
+    assert_int_equal(length, 6);
+    assert_memory_equal(buffer, "\\u00E9", 6);
+}
+
+static void test_fmt_unicode_codepoint_escape_bmp_max(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0xFFFFU, &length));
+    assert_int_equal(length, 6);
+    assert_memory_equal(buffer, "\\uFFFF", 6);
+}
+
+static void test_fmt_unicode_codepoint_escape_supplementary(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x1F600U, &length));
+    assert_int_equal(length, 12);
+    assert_memory_equal(buffer, "\\uD83D\\uDE00", 12);
+}
+
+static void test_fmt_unicode_codepoint_escape_supplementary_min(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x10000U, &length));
+    assert_int_equal(length, 12);
+    assert_memory_equal(buffer, "\\uD800\\uDC00", 12);
+}
+
+static void test_fmt_unicode_codepoint_escape_supplementary_max(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x10FFFFU, &length));
+    assert_int_equal(length, 12);
+    assert_memory_equal(buffer, "\\uDBFF\\uDFFF", 12);
+}
+
+static void test_fmt_unicode_codepoint_escape_rejects_above_max(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x110000U, &length));
+}
+
+static void test_fmt_unicode_codepoint_escape_rejects_high_surrogate(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0xD800U, &length));
+}
+
+static void test_fmt_unicode_codepoint_escape_rejects_low_surrogate(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0xDFFFU, &length));
+}
+
+static void test_fmt_unicode_codepoint_escape_buffer_too_small_bmp(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[5];
+    size_t length = 0;
+    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0041U, &length));
+}
+
+static void test_fmt_unicode_codepoint_escape_buffer_too_small_supplementary(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[11];
+    size_t length = 0;
+    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x1F600U, &length));
+}
+
+static void test_fmt_unicode_codepoint_escape_null_buffer(void** state)
+{
+    BC_UNUSED(state);
+    size_t length = 0;
+    assert_false(bc_core_fmt_unicode_codepoint_escape(NULL, 16, 0x0041U, &length));
+}
+
+static void test_fmt_unicode_codepoint_escape_null_out_length(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    assert_false(bc_core_fmt_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0041U, NULL));
+}
+
+static void test_writer_write_unicode_codepoint_escape(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[64];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+
+    assert_true(bc_core_writer_write_unicode_codepoint_escape(&writer, 0x00E9U));
+    assert_true(bc_core_writer_write_unicode_codepoint_escape(&writer, 0x1F600U));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 18);
+    assert_memory_equal(data, "\\u00E9\\uD83D\\uDE00", 18);
+}
+
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -248,6 +389,21 @@ int main(void)
         cmocka_unit_test(test_fmt_double_bad_frac),
         cmocka_unit_test(test_fmt_bytes_human),
         cmocka_unit_test(test_fmt_duration_ns),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_ascii),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_zero),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_bmp),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_bmp_max),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_supplementary),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_supplementary_min),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_supplementary_max),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_rejects_above_max),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_rejects_high_surrogate),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_rejects_low_surrogate),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_buffer_too_small_bmp),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_buffer_too_small_supplementary),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_null_buffer),
+        cmocka_unit_test(test_fmt_unicode_codepoint_escape_null_out_length),
+        cmocka_unit_test(test_writer_write_unicode_codepoint_escape),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
