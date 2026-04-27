@@ -234,6 +234,107 @@ static void test_byte_mask_find_not_in_mask_high_nibble_above_seven(void** state
     assert_int_equal(offset, 1);
 }
 
+static void test_byte_mask_find_in_mask_short_input_scalar_only(void** state)
+{
+    BC_UNUSED(state);
+    const unsigned char targets[] = {(unsigned char)'X'};
+    bc_core_byte_mask_t mask;
+    assert_true(bc_core_byte_mask_prepare(targets, 1, &mask));
+    unsigned char data[10] = {'a', 'b', 'c', 'X', 'd', 'e', 'f', 'g', 'h', 'i'};
+    size_t offset = 0;
+    assert_true(bc_core_find_byte_in_mask(data, sizeof(data), &mask, &offset));
+    assert_int_equal(offset, 3);
+}
+
+static void test_byte_mask_find_in_mask_exact_32(void** state)
+{
+    BC_UNUSED(state);
+    const unsigned char targets[] = {(unsigned char)'X'};
+    bc_core_byte_mask_t mask;
+    assert_true(bc_core_byte_mask_prepare(targets, 1, &mask));
+    unsigned char data[32];
+    memset(data, 'a', sizeof(data));
+    data[15] = 'X';
+    size_t offset = 0;
+    assert_true(bc_core_find_byte_in_mask(data, sizeof(data), &mask, &offset));
+    assert_int_equal(offset, 15);
+}
+
+static void test_byte_mask_find_in_mask_exact_64(void** state)
+{
+    BC_UNUSED(state);
+    const unsigned char targets[] = {(unsigned char)'X'};
+    bc_core_byte_mask_t mask;
+    assert_true(bc_core_byte_mask_prepare(targets, 1, &mask));
+    unsigned char data[64];
+    memset(data, 'a', sizeof(data));
+    data[50] = 'X';
+    size_t offset = 0;
+    assert_true(bc_core_find_byte_in_mask(data, sizeof(data), &mask, &offset));
+    assert_int_equal(offset, 50);
+}
+
+static void test_byte_mask_find_in_mask_high_nibble_in_avx_chunk(void** state)
+{
+    BC_UNUSED(state);
+    const unsigned char targets[] = {0x80U, 0xFFU};
+    bc_core_byte_mask_t mask;
+    assert_true(bc_core_byte_mask_prepare(targets, 2, &mask));
+    unsigned char data[64];
+    memset(data, 0x10, sizeof(data));
+    data[40] = 0x80U;
+    size_t offset = 0;
+    assert_true(bc_core_find_byte_in_mask(data, sizeof(data), &mask, &offset));
+    assert_int_equal(offset, 40);
+}
+
+static void test_byte_mask_find_not_in_mask_exact_32_no_match(void** state)
+{
+    BC_UNUSED(state);
+    const unsigned char targets[] = {(unsigned char)'a'};
+    bc_core_byte_mask_t mask;
+    assert_true(bc_core_byte_mask_prepare(targets, 1, &mask));
+    unsigned char data[32];
+    memset(data, 'a', sizeof(data));
+    size_t offset = 99;
+    assert_false(bc_core_find_byte_not_in_mask(data, sizeof(data), &mask, &offset));
+}
+
+static void test_byte_mask_find_not_in_mask_short_input_scalar(void** state)
+{
+    BC_UNUSED(state);
+    const unsigned char targets[] = {(unsigned char)'a'};
+    bc_core_byte_mask_t mask;
+    assert_true(bc_core_byte_mask_prepare(targets, 1, &mask));
+    unsigned char data[10] = {'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'b'};
+    size_t offset = 0;
+    assert_true(bc_core_find_byte_not_in_mask(data, sizeof(data), &mask, &offset));
+    assert_int_equal(offset, 9);
+}
+
+static void test_byte_mask_find_in_mask_no_match_in_scalar_tail(void** state)
+{
+    BC_UNUSED(state);
+    const unsigned char targets[] = {(unsigned char)'X'};
+    bc_core_byte_mask_t mask;
+    assert_true(bc_core_byte_mask_prepare(targets, 1, &mask));
+    unsigned char data[40];
+    memset(data, 'a', sizeof(data));
+    size_t offset = 0;
+    assert_false(bc_core_find_byte_in_mask(data, sizeof(data), &mask, &offset));
+}
+
+static void test_byte_mask_predicate_high_nibble_above_seven(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_byte_mask_t mask;
+    assert_true(bc_core_byte_mask_prepare_predicate(predicate_high_bit, NULL, &mask));
+    unsigned char data[10] = {0x10, 0x20, 0xA5, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90};
+    size_t offset = 0;
+    assert_true(bc_core_find_byte_in_mask(data, sizeof(data), &mask, &offset));
+    assert_int_equal(offset, 2);
+}
+
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -255,6 +356,14 @@ int main(void)
         cmocka_unit_test(test_byte_mask_prepare_predicate_uppercase),
         cmocka_unit_test(test_byte_mask_prepare_predicate_no_match),
         cmocka_unit_test(test_byte_mask_prepare_predicate_high_bit),
+        cmocka_unit_test(test_byte_mask_find_in_mask_short_input_scalar_only),
+        cmocka_unit_test(test_byte_mask_find_in_mask_exact_32),
+        cmocka_unit_test(test_byte_mask_find_in_mask_exact_64),
+        cmocka_unit_test(test_byte_mask_find_in_mask_high_nibble_in_avx_chunk),
+        cmocka_unit_test(test_byte_mask_find_not_in_mask_exact_32_no_match),
+        cmocka_unit_test(test_byte_mask_find_not_in_mask_short_input_scalar),
+        cmocka_unit_test(test_byte_mask_find_in_mask_no_match_in_scalar_tail),
+        cmocka_unit_test(test_byte_mask_predicate_high_nibble_above_seven),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
