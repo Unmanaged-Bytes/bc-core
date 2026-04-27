@@ -398,6 +398,77 @@ static void test_dev_full_write_char_after_full_buffer(void** state)
     close(fd);
 }
 
+static void test_write_cstring_writes_full_string(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[64];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_cstring(&writer, "hello"));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 5);
+    assert_memory_equal(data, "hello", 5);
+}
+
+static void test_write_cstring_empty_string_is_noop(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[64];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_cstring(&writer, ""));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 0);
+}
+
+static void test_write_cstring_after_error_latched(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[4];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_cstring(&writer, "this is too long"));
+    assert_true(writer.error_latched != 0);
+    assert_false(bc_core_writer_write_cstring(&writer, "x"));
+}
+
+static void test_write_cstring_overflow_latches_error(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[3];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_cstring(&writer, "abcd"));
+    assert_true(writer.error_latched != 0);
+}
+
+static void test_write_cstring_long_runtime_string(void** state)
+{
+    BC_UNUSED(state);
+    char source[256];
+    for (size_t i = 0; i < sizeof(source) - 1U; i++) {
+        source[i] = (char)('a' + (i % 26));
+    }
+    source[sizeof(source) - 1U] = 0;
+
+    bc_core_writer_t writer;
+    char buffer[512];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_cstring(&writer, source));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, sizeof(source) - 1U);
+    assert_memory_equal(data, source, sizeof(source) - 1U);
+}
+
 static void test_destroy_returns_flush_status(void** state)
 {
     BC_UNUSED(state);
@@ -447,6 +518,11 @@ int main(void)
         cmocka_unit_test(test_dev_full_flush_fail),
         cmocka_unit_test(test_dev_full_write_bytes_large),
         cmocka_unit_test(test_dev_full_write_char_after_full_buffer),
+        cmocka_unit_test(test_write_cstring_writes_full_string),
+        cmocka_unit_test(test_write_cstring_empty_string_is_noop),
+        cmocka_unit_test(test_write_cstring_after_error_latched),
+        cmocka_unit_test(test_write_cstring_overflow_latches_error),
+        cmocka_unit_test(test_write_cstring_long_runtime_string),
         cmocka_unit_test(test_destroy_returns_flush_status),
     };
 

@@ -28,6 +28,7 @@ bool bc_core_writer_buffer_data(const bc_core_writer_t* writer, const char** out
 
 bool bc_core_writer_write_bytes(bc_core_writer_t* writer, const void* data, size_t len);
 bool bc_core_writer_write_char(bc_core_writer_t* writer, char value);
+bool bc_core_writer_write_cstring(bc_core_writer_t* writer, const char* cstring);
 bool bc_core_writer_write_error_description(bc_core_writer_t* writer, bc_core_error_code_t code);
 
 #define BC_CORE_WRITER_PUTS(writer, literal) bc_core_writer_write_bytes((writer), (literal), sizeof(literal) - 1U)

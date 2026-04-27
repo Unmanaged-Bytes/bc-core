@@ -174,6 +174,15 @@ bool bc_core_writer_write_char(bc_core_writer_t* writer, char value)
     return true;
 }
 
+bool bc_core_writer_write_cstring(bc_core_writer_t* writer, const char* cstring)
+{
+    size_t length = 0;
+    if (!bc_core_length(cstring, 0, &length)) {
+        return false;
+    }
+    return bc_core_writer_write_bytes(writer, cstring, length);
+}
+
 bool bc_core_writer_write_unsigned_integer_64_decimal(bc_core_writer_t* writer, uint64_t value)
 {
     char scratch[21];
