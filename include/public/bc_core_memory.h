@@ -14,6 +14,7 @@ bool bc_core_zero_secure(volatile void* dst, size_t len);
 bool bc_core_copy(void* dst, const void* src, size_t len);
 bool bc_core_move(void* dst, const void* src, size_t len);
 bool bc_core_equal(const void* a, const void* b, size_t len, bool* out_equal);
+bool bc_core_equal_case_insensitive_ascii(const void* a, size_t length_a, const void* b, size_t length_b, bool* out_equal);
 bool bc_core_compare(const void* a, const void* b, size_t len, int* out_result);
 bool bc_core_swap(void* a, void* b, size_t len);
 
