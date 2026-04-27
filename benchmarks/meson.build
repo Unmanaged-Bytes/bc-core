@@ -13,3 +13,11 @@ benchmark('bench_bc_core_format',
     ),
     timeout : 60,
 )
+
+benchmark('bench_bc_core_sort',
+    executable('bench_bc_core_sort', 'bench_bc_core_sort.c',
+        include_directories : bc_core_public_inc,
+        dependencies : [bc_core_dep],
+    ),
+    timeout : 120,
+)
