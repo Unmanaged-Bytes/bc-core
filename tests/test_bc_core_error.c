@@ -295,6 +295,17 @@ static void test_from_system_errno_eoverflow(void** state)
     assert_int_equal(code, BC_CORE_ERROR_OVERFLOW);
 }
 
+static void test_from_system_errno_enosys(void** state)
+{
+    BC_UNUSED(state);
+
+    bc_core_error_code_t code = BC_CORE_ERROR_NONE;
+    bool success = bc_core_error_from_system_errno(ENOSYS, &code);
+
+    assert_true(success);
+    assert_int_equal(code, BC_CORE_ERROR_UNAVAILABLE);
+}
+
 static void test_from_system_errno_unknown(void** state)
 {
     BC_UNUSED(state);
@@ -340,6 +351,7 @@ int main(void)
         cmocka_unit_test(test_from_system_errno_eio),
         cmocka_unit_test(test_from_system_errno_epipe),
         cmocka_unit_test(test_from_system_errno_eoverflow),
+        cmocka_unit_test(test_from_system_errno_enosys),
         cmocka_unit_test(test_from_system_errno_unknown),
         cmocka_unit_test(test_from_system_errno_out_null),
     };

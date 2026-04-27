@@ -201,6 +201,217 @@ static void test_reader_read_line_long_line_error(void** state)
     close(fd);
 }
 
+static void test_reader_read_max_len_zero(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open_temp_with_content("hello", 5);
+    assert_true(fd >= 0);
+
+    bc_core_reader_t reader;
+    char buffer[16];
+    assert_true(bc_core_reader_init(&reader, fd, buffer, sizeof(buffer)));
+
+    char destination[8];
+    size_t bytes_read = 99;
+    assert_true(bc_core_reader_read(&reader, destination, 0, &bytes_read));
+    assert_int_equal(bytes_read, 0);
+
+    bc_core_reader_destroy(&reader);
+    close(fd);
+}
+
+static void test_reader_read_eof_returns_zero(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open_temp_with_content("ab", 2);
+    assert_true(fd >= 0);
+
+    bc_core_reader_t reader;
+    char buffer[16];
+    assert_true(bc_core_reader_init(&reader, fd, buffer, sizeof(buffer)));
+
+    char destination[8];
+    size_t bytes_read = 0;
+    assert_true(bc_core_reader_read(&reader, destination, sizeof(destination), &bytes_read));
+    assert_int_equal(bytes_read, 2);
+
+    bytes_read = 99;
+    assert_true(bc_core_reader_read(&reader, destination, sizeof(destination), &bytes_read));
+    assert_int_equal(bytes_read, 0);
+    assert_true(bc_core_reader_is_eof(&reader));
+
+    bc_core_reader_destroy(&reader);
+    close(fd);
+}
+
+static void test_reader_read_invalid_fd_latches_error(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open_temp_with_content("data", 4);
+    assert_true(fd >= 0);
+
+    bc_core_reader_t reader;
+    char buffer[16];
+    assert_true(bc_core_reader_init(&reader, fd, buffer, sizeof(buffer)));
+
+    close(fd);
+
+    char destination[8];
+    size_t bytes_read = 0;
+    assert_false(bc_core_reader_read(&reader, destination, sizeof(destination), &bytes_read));
+    assert_true(bc_core_reader_has_error(&reader));
+
+    bc_core_reader_destroy(&reader);
+}
+
+static void test_reader_read_after_error_latched(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open_temp_with_content("data", 4);
+    assert_true(fd >= 0);
+
+    bc_core_reader_t reader;
+    char buffer[16];
+    assert_true(bc_core_reader_init(&reader, fd, buffer, sizeof(buffer)));
+    close(fd);
+
+    char destination[8];
+    size_t bytes_read = 0;
+    (void)bc_core_reader_read(&reader, destination, sizeof(destination), &bytes_read);
+
+    assert_false(bc_core_reader_read(&reader, destination, sizeof(destination), &bytes_read));
+    bc_core_reader_destroy(&reader);
+}
+
+static void test_reader_read_exact_after_error_latched(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open_temp_with_content("data", 4);
+    assert_true(fd >= 0);
+
+    bc_core_reader_t reader;
+    char buffer[16];
+    assert_true(bc_core_reader_init(&reader, fd, buffer, sizeof(buffer)));
+    close(fd);
+
+    char destination[8];
+    (void)bc_core_reader_read_exact(&reader, destination, 8);
+
+    assert_false(bc_core_reader_read_exact(&reader, destination, 4));
+    bc_core_reader_destroy(&reader);
+}
+
+static void test_reader_read_line_after_error_latched(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open_temp_with_content("data", 4);
+    assert_true(fd >= 0);
+
+    bc_core_reader_t reader;
+    char buffer[16];
+    assert_true(bc_core_reader_init(&reader, fd, buffer, sizeof(buffer)));
+    close(fd);
+
+    const char* line = NULL;
+    size_t length = 0;
+    (void)bc_core_reader_read_line(&reader, &line, &length);
+
+    assert_false(bc_core_reader_read_line(&reader, &line, &length));
+    bc_core_reader_destroy(&reader);
+}
+
+static void test_reader_destroy_clears_fields(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open_temp_with_content("data", 4);
+    assert_true(fd >= 0);
+
+    bc_core_reader_t reader;
+    char buffer[16];
+    assert_true(bc_core_reader_init(&reader, fd, buffer, sizeof(buffer)));
+    assert_true(bc_core_reader_destroy(&reader));
+    assert_int_equal(reader.fd, -1);
+    assert_null(reader.buffer);
+    assert_int_equal(reader.capacity, 0);
+
+    close(fd);
+}
+
+static void test_reader_is_eof_initially_false(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open_temp_with_content("hi", 2);
+    assert_true(fd >= 0);
+
+    bc_core_reader_t reader;
+    char buffer[16];
+    assert_true(bc_core_reader_init(&reader, fd, buffer, sizeof(buffer)));
+    assert_false(bc_core_reader_is_eof(&reader));
+
+    bc_core_reader_destroy(&reader);
+    close(fd);
+}
+
+static void test_reader_has_error_initially_false(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open_temp_with_content("hi", 2);
+    assert_true(fd >= 0);
+
+    bc_core_reader_t reader;
+    char buffer[16];
+    assert_true(bc_core_reader_init(&reader, fd, buffer, sizeof(buffer)));
+    assert_false(bc_core_reader_has_error(&reader));
+
+    bc_core_reader_destroy(&reader);
+    close(fd);
+}
+
+static void test_reader_third_read_after_eof_latched(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open_temp_with_content("ab", 2);
+    assert_true(fd >= 0);
+
+    bc_core_reader_t reader;
+    char buffer[16];
+    assert_true(bc_core_reader_init(&reader, fd, buffer, sizeof(buffer)));
+
+    char destination[8];
+    size_t bytes_read = 0;
+    assert_true(bc_core_reader_read(&reader, destination, sizeof(destination), &bytes_read));
+    assert_int_equal(bytes_read, 2);
+    assert_true(bc_core_reader_read(&reader, destination, sizeof(destination), &bytes_read));
+    assert_int_equal(bytes_read, 0);
+    assert_true(bc_core_reader_read(&reader, destination, sizeof(destination), &bytes_read));
+    assert_int_equal(bytes_read, 0);
+
+    bc_core_reader_destroy(&reader);
+    close(fd);
+}
+
+static void test_reader_read_line_eof_with_residual(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open_temp_with_content("trailing", 8);
+    assert_true(fd >= 0);
+
+    bc_core_reader_t reader;
+    char buffer[16];
+    assert_true(bc_core_reader_init(&reader, fd, buffer, sizeof(buffer)));
+
+    const char* line = NULL;
+    size_t length = 0;
+    assert_true(bc_core_reader_read_line(&reader, &line, &length));
+    assert_int_equal(length, 8);
+    assert_memory_equal(line, "trailing", 8);
+
+    assert_false(bc_core_reader_read_line(&reader, &line, &length));
+
+    bc_core_reader_destroy(&reader);
+    close(fd);
+}
+
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -211,6 +422,17 @@ int main(void)
         cmocka_unit_test(test_reader_read_line_multiline),
         cmocka_unit_test(test_reader_read_line_refill_needed),
         cmocka_unit_test(test_reader_read_line_long_line_error),
+        cmocka_unit_test(test_reader_read_max_len_zero),
+        cmocka_unit_test(test_reader_read_eof_returns_zero),
+        cmocka_unit_test(test_reader_read_invalid_fd_latches_error),
+        cmocka_unit_test(test_reader_read_after_error_latched),
+        cmocka_unit_test(test_reader_read_exact_after_error_latched),
+        cmocka_unit_test(test_reader_read_line_after_error_latched),
+        cmocka_unit_test(test_reader_destroy_clears_fields),
+        cmocka_unit_test(test_reader_is_eof_initially_false),
+        cmocka_unit_test(test_reader_has_error_initially_false),
+        cmocka_unit_test(test_reader_third_read_after_eof_latched),
+        cmocka_unit_test(test_reader_read_line_eof_with_residual),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

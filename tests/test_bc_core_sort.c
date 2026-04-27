@@ -241,6 +241,43 @@ static void test_sort_null_base_with_count_one(void** state)
     assert_true(bc_core_sort_with_compare(NULL, 1, sizeof(int32_t), less_than_int32, NULL));
 }
 
+static void test_sort_pathological_input_triggers_heap_fallback(void** state)
+{
+    BC_UNUSED(state);
+    enum { COUNT = 4096 };
+    int32_t* array = malloc(sizeof(int32_t) * COUNT);
+    assert_non_null(array);
+    /* Pathological: alternating max/min values that defeat mid pivot */
+    for (size_t index = 0; index < COUNT; ++index) {
+        if (index % 2U == 0U) {
+            array[index] = (int32_t)(index / 2U);
+        } else {
+            array[index] = (int32_t)(COUNT - 1U - (index / 2U));
+        }
+    }
+    assert_true(bc_core_sort_with_compare(array, COUNT, sizeof(int32_t), less_than_int32, NULL));
+    for (size_t index = 1; index < COUNT; ++index) {
+        assert_true(array[index - 1] <= array[index]);
+    }
+    free(array);
+}
+
+static void test_sort_many_duplicates_large(void** state)
+{
+    BC_UNUSED(state);
+    enum { COUNT = 2048 };
+    int32_t* array = malloc(sizeof(int32_t) * COUNT);
+    assert_non_null(array);
+    for (size_t index = 0; index < COUNT; ++index) {
+        array[index] = (int32_t)(index % 7U);
+    }
+    assert_true(bc_core_sort_with_compare(array, COUNT, sizeof(int32_t), less_than_int32, NULL));
+    for (size_t index = 1; index < COUNT; ++index) {
+        assert_true(array[index - 1] <= array[index]);
+    }
+    free(array);
+}
+
 static void test_sort_null_base_with_count_many(void** state)
 {
     BC_UNUSED(state);
@@ -268,6 +305,8 @@ int main(void)
         cmocka_unit_test(test_sort_rejects_zero_element_size),
         cmocka_unit_test(test_sort_null_base_with_count_zero),
         cmocka_unit_test(test_sort_null_base_with_count_one),
+        cmocka_unit_test(test_sort_pathological_input_triggers_heap_fallback),
+        cmocka_unit_test(test_sort_many_duplicates_large),
         cmocka_unit_test(test_sort_null_base_with_count_many),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);

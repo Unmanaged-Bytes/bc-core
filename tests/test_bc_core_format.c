@@ -353,6 +353,227 @@ static void test_fmt_unicode_codepoint_escape_null_out_length(void** state)
     assert_false(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0041U, NULL));
 }
 
+static void test_format_uint64_dec_capacity_zero(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[1];
+    size_t length = 0;
+    assert_false(bc_core_format_unsigned_integer_64_decimal(buffer, 0, 12345U, &length));
+}
+
+static void test_format_uint64_hex_capacity_zero(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[1];
+    size_t length = 0;
+    assert_false(bc_core_format_unsigned_integer_64_hexadecimal(buffer, 0, 0xABCDU, &length));
+}
+
+static void test_format_signed_integer_64_negative_capacity_one(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[1];
+    size_t length = 0;
+    assert_false(bc_core_format_signed_integer_64(buffer, 1, -42, &length));
+}
+
+static void test_format_signed_integer_64_negative_capacity_too_small_for_digits(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[2];
+    size_t length = 0;
+    assert_false(bc_core_format_signed_integer_64(buffer, 2, -12345, &length));
+}
+
+static void test_format_signed_integer_64_capacity_zero_negative(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[1];
+    size_t length = 0;
+    assert_false(bc_core_format_signed_integer_64(buffer, 0, -1, &length));
+}
+
+static void test_format_double_value_too_large(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[64];
+    size_t length = 0;
+    /* magnitude * scale + 0.5 must overflow UINT64_MAX */
+    assert_false(bc_core_format_double(buffer, sizeof(buffer), 1e20, 0, &length));
+}
+
+static void test_format_double_negative_capacity_zero(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[1];
+    size_t length = 0;
+    assert_false(bc_core_format_double(buffer, 0, -1.0, 0, &length));
+}
+
+static void test_format_bytes_human_capacity_no_room_for_space(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[4];
+    size_t length = 0;
+    /* "2.00" fits exactly in 4 bytes -> position == capacity -> no room for ' ' */
+    assert_false(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), 2048U, &length));
+}
+
+static void test_format_double_capacity_zero(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[1];
+    size_t length = 0;
+    assert_false(bc_core_format_double(buffer, 0, 1.0, 2, &length));
+}
+
+static void test_format_double_capacity_too_small_for_integer(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[1];
+    size_t length = 0;
+    assert_false(bc_core_format_double(buffer, 1, 12345.6, 2, &length));
+}
+
+static void test_format_double_capacity_too_small_for_decimal_point(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[2];
+    size_t length = 0;
+    assert_false(bc_core_format_double(buffer, 2, 12.3, 1, &length));
+}
+
+static void test_format_double_capacity_too_small_for_fraction(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[5];
+    size_t length = 0;
+    assert_false(bc_core_format_double(buffer, 5, 12.345, 5, &length));
+}
+
+static void test_format_double_negative_capacity_one(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[1];
+    size_t length = 0;
+    assert_false(bc_core_format_double(buffer, 1, -1.0, 0, &length));
+}
+
+static void test_format_double_negative_infinity_capacity_too_small(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[3];
+    size_t length = 0;
+    double inf_value = HUGE_VAL;
+    assert_false(bc_core_format_double(buffer, sizeof(buffer), -inf_value, 0, &length));
+}
+
+static void test_format_double_nan_capacity_too_small(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[2];
+    size_t length = 0;
+    double nan_value = nan("");
+    assert_false(bc_core_format_double(buffer, sizeof(buffer), nan_value, 0, &length));
+}
+
+static void test_format_bytes_human_b_only(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), 512U, &length));
+    assert_memory_equal(buffer, "512 B", length);
+}
+
+static void test_format_bytes_human_kb_two_decimals(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), 2048U, &length));
+    assert_memory_equal(buffer, "2.00 KB", length);
+}
+
+static void test_format_bytes_human_mb_one_decimal(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    uint64_t bytes = 50ULL * 1024ULL * 1024ULL;
+    assert_true(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), bytes, &length));
+    assert_memory_equal(buffer, "50.0 MB", length);
+}
+
+static void test_format_bytes_human_gb_zero_decimal(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    uint64_t bytes = 500ULL * 1024ULL * 1024ULL * 1024ULL;
+    assert_true(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), bytes, &length));
+    assert_memory_equal(buffer, "500 GB", length);
+}
+
+static void test_format_bytes_human_capacity_too_small(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[3];
+    size_t length = 0;
+    assert_false(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), 2048U, &length));
+}
+
+static void test_format_bytes_human_capacity_no_room_for_unit(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[5];
+    size_t length = 0;
+    assert_false(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), 2048U, &length));
+}
+
+static void test_format_duration_us_three_decimals(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_format_duration_nanoseconds(buffer, sizeof(buffer), 1500U, &length));
+    assert_memory_equal(buffer, "1.500us", length);
+}
+
+static void test_format_duration_ms_two_decimals(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_format_duration_nanoseconds(buffer, sizeof(buffer), 25ULL * 1000ULL * 1000ULL, &length));
+    assert_memory_equal(buffer, "25.00ms", length);
+}
+
+static void test_format_duration_s_one_decimal(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[16];
+    size_t length = 0;
+    assert_true(bc_core_format_duration_nanoseconds(buffer, sizeof(buffer), 250ULL * 1000ULL * 1000ULL * 1000ULL, &length));
+    assert_memory_equal(buffer, "250.0s", length);
+}
+
+static void test_format_duration_capacity_too_small(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[2];
+    size_t length = 0;
+    assert_false(bc_core_format_duration_nanoseconds(buffer, sizeof(buffer), 1500U, &length));
+}
+
+static void test_format_duration_capacity_no_room_for_unit(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[6];
+    size_t length = 0;
+    assert_false(bc_core_format_duration_nanoseconds(buffer, sizeof(buffer), 1500U, &length));
+}
+
 static void test_writer_write_unicode_codepoint_escape(void** state)
 {
     BC_UNUSED(state);
@@ -403,6 +624,32 @@ int main(void)
         cmocka_unit_test(test_fmt_unicode_codepoint_escape_buffer_too_small_supplementary),
         cmocka_unit_test(test_fmt_unicode_codepoint_escape_null_buffer),
         cmocka_unit_test(test_fmt_unicode_codepoint_escape_null_out_length),
+        cmocka_unit_test(test_format_uint64_dec_capacity_zero),
+        cmocka_unit_test(test_format_uint64_hex_capacity_zero),
+        cmocka_unit_test(test_format_signed_integer_64_negative_capacity_one),
+        cmocka_unit_test(test_format_signed_integer_64_negative_capacity_too_small_for_digits),
+        cmocka_unit_test(test_format_signed_integer_64_capacity_zero_negative),
+        cmocka_unit_test(test_format_double_value_too_large),
+        cmocka_unit_test(test_format_double_negative_capacity_zero),
+        cmocka_unit_test(test_format_bytes_human_capacity_no_room_for_space),
+        cmocka_unit_test(test_format_double_capacity_zero),
+        cmocka_unit_test(test_format_double_capacity_too_small_for_integer),
+        cmocka_unit_test(test_format_double_capacity_too_small_for_decimal_point),
+        cmocka_unit_test(test_format_double_capacity_too_small_for_fraction),
+        cmocka_unit_test(test_format_double_negative_capacity_one),
+        cmocka_unit_test(test_format_double_negative_infinity_capacity_too_small),
+        cmocka_unit_test(test_format_double_nan_capacity_too_small),
+        cmocka_unit_test(test_format_bytes_human_b_only),
+        cmocka_unit_test(test_format_bytes_human_kb_two_decimals),
+        cmocka_unit_test(test_format_bytes_human_mb_one_decimal),
+        cmocka_unit_test(test_format_bytes_human_gb_zero_decimal),
+        cmocka_unit_test(test_format_bytes_human_capacity_too_small),
+        cmocka_unit_test(test_format_bytes_human_capacity_no_room_for_unit),
+        cmocka_unit_test(test_format_duration_us_three_decimals),
+        cmocka_unit_test(test_format_duration_ms_two_decimals),
+        cmocka_unit_test(test_format_duration_s_one_decimal),
+        cmocka_unit_test(test_format_duration_capacity_too_small),
+        cmocka_unit_test(test_format_duration_capacity_no_room_for_unit),
         cmocka_unit_test(test_writer_write_unicode_codepoint_escape),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);

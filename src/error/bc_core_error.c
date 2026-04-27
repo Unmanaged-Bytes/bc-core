@@ -57,9 +57,7 @@ bool bc_core_error_describe(bc_core_error_code_t code, char* buffer, size_t capa
     if (entry->description_length > capacity) {
         return false;
     }
-    if (!bc_core_copy(buffer, entry->description, entry->description_length)) {
-        return false;
-    }
+    (void)bc_core_copy(buffer, entry->description, entry->description_length);
     *out_length = entry->description_length;
     return true;
 }

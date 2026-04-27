@@ -7,6 +7,7 @@
 
 #include "bc_core.h"
 
+#include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -203,6 +204,216 @@ static void test_write_error_description_after_error_latched(void** state)
     assert_false(success);
 }
 
+static void test_write_error_description_unknown_with_fd_writer(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[64];
+    assert_true(bc_core_writer_init_standard_error(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_error_description(&writer, (bc_core_error_code_t)9999));
+    assert_true(bc_core_writer_has_error(&writer));
+}
+
+static void test_init_rejects_negative_fd(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[16];
+    assert_false(bc_core_writer_init(&writer, -1, buffer, sizeof(buffer)));
+}
+
+static void test_init_rejects_null_buffer(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    assert_false(bc_core_writer_init(&writer, 1, NULL, 64));
+}
+
+static void test_init_rejects_zero_capacity(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[16];
+    assert_false(bc_core_writer_init(&writer, 1, buffer, 0));
+}
+
+static void test_flush_after_error_latched_returns_false(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[4];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_bytes(&writer, "abcdef", 6));
+    assert_false(bc_core_writer_flush(&writer));
+}
+
+static void test_write_bytes_zero_length_is_noop(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[16];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_bytes(&writer, "ignored", 0));
+
+    const char* data = NULL;
+    size_t length = 99;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 0);
+}
+
+static void test_write_bytes_after_error_latched(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[4];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_bytes(&writer, "abcdef", 6));
+    assert_false(bc_core_writer_write_bytes(&writer, "xx", 2));
+}
+
+static void test_write_char_after_error_latched(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[2];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_char(&writer, 'a'));
+    assert_true(bc_core_writer_write_char(&writer, 'b'));
+    assert_false(bc_core_writer_write_char(&writer, 'c'));
+    assert_false(bc_core_writer_write_char(&writer, 'd'));
+}
+
+static void test_write_uint64_hexadecimal_padded_invalid_digits_zero(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[64];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_unsigned_integer_64_hexadecimal_padded(&writer, 0xABU, 0));
+    assert_true(bc_core_writer_has_error(&writer));
+}
+
+static void test_write_uint64_hexadecimal_padded_invalid_digits_too_many(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[64];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_unsigned_integer_64_hexadecimal_padded(&writer, 0xABU, 17));
+    assert_true(bc_core_writer_has_error(&writer));
+}
+
+static void test_write_double_invalid_frac_digits_negative(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[64];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_double(&writer, 1.0, -1));
+    assert_true(bc_core_writer_has_error(&writer));
+}
+
+static void test_write_double_invalid_frac_digits_too_many(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[64];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_double(&writer, 1.0, 19));
+    assert_true(bc_core_writer_has_error(&writer));
+}
+
+static void test_write_unicode_invalid_codepoint_above_max(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[64];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_unicode_codepoint_escape(&writer, 0x110000U));
+    assert_true(bc_core_writer_has_error(&writer));
+}
+
+static void test_write_unicode_invalid_codepoint_surrogate(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[64];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_unicode_codepoint_escape(&writer, 0xD800U));
+    assert_true(bc_core_writer_has_error(&writer));
+}
+
+static void test_dev_full_flush_fail(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open("/dev/full", O_WRONLY);
+    if (fd < 0) {
+        skip();
+        return;
+    }
+    bc_core_writer_t writer;
+    char buffer[16];
+    assert_true(bc_core_writer_init(&writer, fd, buffer, sizeof(buffer)));
+    /* Fill the buffer then flush -> /dev/full returns ENOSPC */
+    assert_true(bc_core_writer_write_bytes(&writer, "0123456789ABCDEF", 16));
+    assert_false(bc_core_writer_flush(&writer));
+    assert_true(bc_core_writer_has_error(&writer));
+    close(fd);
+}
+
+static void test_dev_full_write_bytes_large(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open("/dev/full", O_WRONLY);
+    if (fd < 0) {
+        skip();
+        return;
+    }
+    bc_core_writer_t writer;
+    char buffer[16];
+    assert_true(bc_core_writer_init(&writer, fd, buffer, sizeof(buffer)));
+    char large[64];
+    for (size_t index = 0; index < sizeof(large); ++index) {
+        large[index] = (char)('A' + (index % 26));
+    }
+    assert_false(bc_core_writer_write_bytes(&writer, large, sizeof(large)));
+    assert_true(bc_core_writer_has_error(&writer));
+    close(fd);
+}
+
+static void test_dev_full_write_char_after_full_buffer(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open("/dev/full", O_WRONLY);
+    if (fd < 0) {
+        skip();
+        return;
+    }
+    bc_core_writer_t writer;
+    char buffer[2];
+    assert_true(bc_core_writer_init(&writer, fd, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_char(&writer, 'a'));
+    assert_true(bc_core_writer_write_char(&writer, 'b'));
+    assert_false(bc_core_writer_write_char(&writer, 'c'));
+    close(fd);
+}
+
+static void test_destroy_returns_flush_status(void** state)
+{
+    BC_UNUSED(state);
+    int fd = open("/dev/full", O_WRONLY);
+    if (fd < 0) {
+        skip();
+        return;
+    }
+    bc_core_writer_t writer;
+    char buffer[16];
+    assert_true(bc_core_writer_init(&writer, fd, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_bytes(&writer, "data", 4));
+    assert_false(bc_core_writer_destroy(&writer));
+    close(fd);
+}
+
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -219,6 +430,24 @@ int main(void)
         cmocka_unit_test(test_write_error_description_round_trip),
         cmocka_unit_test(test_write_error_description_unknown_code),
         cmocka_unit_test(test_write_error_description_after_error_latched),
+        cmocka_unit_test(test_write_error_description_unknown_with_fd_writer),
+        cmocka_unit_test(test_init_rejects_negative_fd),
+        cmocka_unit_test(test_init_rejects_null_buffer),
+        cmocka_unit_test(test_init_rejects_zero_capacity),
+        cmocka_unit_test(test_flush_after_error_latched_returns_false),
+        cmocka_unit_test(test_write_bytes_zero_length_is_noop),
+        cmocka_unit_test(test_write_bytes_after_error_latched),
+        cmocka_unit_test(test_write_char_after_error_latched),
+        cmocka_unit_test(test_write_uint64_hexadecimal_padded_invalid_digits_zero),
+        cmocka_unit_test(test_write_uint64_hexadecimal_padded_invalid_digits_too_many),
+        cmocka_unit_test(test_write_double_invalid_frac_digits_negative),
+        cmocka_unit_test(test_write_double_invalid_frac_digits_too_many),
+        cmocka_unit_test(test_write_unicode_invalid_codepoint_above_max),
+        cmocka_unit_test(test_write_unicode_invalid_codepoint_surrogate),
+        cmocka_unit_test(test_dev_full_flush_fail),
+        cmocka_unit_test(test_dev_full_write_bytes_large),
+        cmocka_unit_test(test_dev_full_write_char_after_full_buffer),
+        cmocka_unit_test(test_destroy_returns_flush_status),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

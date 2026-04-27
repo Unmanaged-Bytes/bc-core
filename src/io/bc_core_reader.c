@@ -48,19 +48,12 @@ static bool reader_refill(bc_core_reader_t* reader)
         reader->fill_position = 0;
     } else if (reader->read_position > 0) {
         size_t buffered = reader->fill_position - reader->read_position;
-        if (!bc_core_copy(reader->buffer, reader->buffer + reader->read_position, buffered)) {
-            reader->error_latched = 1;
-            return false;
-        }
+        (void)bc_core_copy(reader->buffer, reader->buffer + reader->read_position, buffered);
         reader->read_position = 0;
         reader->fill_position = buffered;
     }
 
     if (reader->eof_latched) {
-        return true;
-    }
-
-    if (reader->fill_position == reader->capacity) {
         return true;
     }
 
@@ -105,10 +98,7 @@ bool bc_core_reader_read(bc_core_reader_t* reader, void* out, size_t max_len, si
     size_t available = reader->fill_position - reader->read_position;
     size_t to_copy = max_len < available ? max_len : available;
 
-    if (!bc_core_copy(out, reader->buffer + reader->read_position, to_copy)) {
-        reader->error_latched = 1;
-        return false;
-    }
+    (void)bc_core_copy(out, reader->buffer + reader->read_position, to_copy);
     reader->read_position += to_copy;
     *out_read = to_copy;
     return true;
