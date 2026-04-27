@@ -15,9 +15,11 @@
 #endif
 
 static const char* const public_headers[] = {
-    "include/public/bc_core.h",        "include/public/bc_core_cpu.h",    "include/public/bc_core_error.h",
-    "include/public/bc_core_format.h", "include/public/bc_core_hash.h",   "include/public/bc_core_io.h",
-    "include/public/bc_core_math.h",   "include/public/bc_core_memory.h", NULL,
+    "include/public/bc_core.h",       "include/public/bc_core_cpu.h",
+    "include/public/bc_core_error.h", "include/public/bc_core_format.h",
+    "include/public/bc_core_hash.h",  "include/public/bc_core_io.h",
+    "include/public/bc_core_math.h",  "include/public/bc_core_memory.h",
+    "include/public/bc_core_sort.h",  NULL,
 };
 
 static const char* const forbidden_tokens[] = {
