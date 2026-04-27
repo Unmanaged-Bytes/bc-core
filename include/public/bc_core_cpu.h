@@ -26,12 +26,15 @@
 #define BC_BUFFER_L2_FULL_BYTES ((size_t)384 * 1024)
 #define BC_BUFFER_L3_PER_THREAD_BYTES ((size_t)1024 * 1024)
 
-/* ===== Streaming (NT stores) thresholds — measured on Zen 3 =====
-   Above these, BC_CORE_CACHE_POLICY_STREAMING outperforms the cached path
-   on bandwidth-bound primitives. Sized conservatively (lower bound) so the
-   same constant works on both AMD Zen 3 and Intel Tiger Lake — refine when
-   ws-laptop-00 measurements are available. */
-#define BC_BUFFER_COPY_STREAMING_THRESHOLD ((size_t)1 * 1024 * 1024)
+/* ===== Streaming (NT stores) thresholds — measured Zen 3 + Tiger Lake =====
+   Above these, BC_CORE_CACHE_POLICY_STREAMING outperforms (or equals) the
+   cached path on bandwidth-bound primitives across both AMD Zen 3 and Intel
+   Tiger Lake. Plat at 4 MiB:
+   - On AMD Zen 3, copy crossover is ~1 MiB; we accept a marginal loss in the
+     1-4 MiB range (no current consumer hits this band on the hot path).
+   - On Intel Tiger Lake, copy STREAMING never wins regardless of size; 4 MiB
+     keeps it from being engaged on workloads where it would regress. */
+#define BC_BUFFER_COPY_STREAMING_THRESHOLD ((size_t)4 * 1024 * 1024)
 #define BC_BUFFER_ZERO_STREAMING_THRESHOLD ((size_t)4 * 1024 * 1024)
 #define BC_BUFFER_FILL_STREAMING_THRESHOLD ((size_t)4 * 1024 * 1024)
 

@@ -80,7 +80,7 @@ static void test_constant_values_match_brief(void** state)
     assert_int_equal(BC_BUFFER_L2_HOT_BYTES, (size_t)256 * 1024);
     assert_int_equal(BC_BUFFER_L2_FULL_BYTES, (size_t)384 * 1024);
     assert_int_equal(BC_BUFFER_L3_PER_THREAD_BYTES, (size_t)1024 * 1024);
-    assert_int_equal(BC_BUFFER_COPY_STREAMING_THRESHOLD, (size_t)1 * 1024 * 1024);
+    assert_int_equal(BC_BUFFER_COPY_STREAMING_THRESHOLD, (size_t)4 * 1024 * 1024);
     assert_int_equal(BC_BUFFER_ZERO_STREAMING_THRESHOLD, (size_t)4 * 1024 * 1024);
     assert_int_equal(BC_BUFFER_FILL_STREAMING_THRESHOLD, (size_t)4 * 1024 * 1024);
 }
