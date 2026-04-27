@@ -41,6 +41,12 @@ test_bc_core_compare = executable('test_bc_core_compare',
     dependencies : [bc_core_dep, cmocka_dep],
 )
 
+test_bc_core_compare_alignment = executable('test_bc_core_compare_alignment',
+    'test_bc_core_compare_alignment.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('compare_alignment', test_bc_core_compare_alignment)
+
 test_bc_core_contains = executable('test_bc_core_contains',
     'test_bc_core_contains.c',
     dependencies : [bc_core_dep, cmocka_dep],
