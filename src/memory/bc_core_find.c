@@ -18,6 +18,72 @@ static bool verify_pattern_candidate(const unsigned char* haystack, const unsign
     return false;
 }
 
+__attribute__((target("avx512f,avx512bw"))) static bool bc_core_find_byte_avx512(const void* data, size_t len, unsigned char target,
+                                                                                  size_t* out_offset)
+{
+    if (len == 0) {
+        return false;
+    }
+
+    const unsigned char* bytes = (const unsigned char*)data;
+    const unsigned char* ptr = bytes;
+    const unsigned char* end = bytes + len;
+    __m512i target_vec = _mm512_set1_epi8((char)target);
+
+    while (ptr + 256 <= end) {
+        __m512i c0 = _mm512_loadu_si512((const __m512i*)(ptr + 0));
+        __m512i c1 = _mm512_loadu_si512((const __m512i*)(ptr + 64));
+        __m512i c2 = _mm512_loadu_si512((const __m512i*)(ptr + 128));
+        __m512i c3 = _mm512_loadu_si512((const __m512i*)(ptr + 192));
+
+        __mmask64 m0 = _mm512_cmpeq_epi8_mask(c0, target_vec);
+        __mmask64 m1 = _mm512_cmpeq_epi8_mask(c1, target_vec);
+        __mmask64 m2 = _mm512_cmpeq_epi8_mask(c2, target_vec);
+        __mmask64 m3 = _mm512_cmpeq_epi8_mask(c3, target_vec);
+
+        if ((m0 | m1 | m2 | m3) != 0) {
+            if (m0) {
+                *out_offset = (size_t)(ptr - bytes) + 0 + (size_t)__builtin_ctzll(m0);
+                return true;
+            }
+            if (m1) {
+                *out_offset = (size_t)(ptr - bytes) + 64 + (size_t)__builtin_ctzll(m1);
+                return true;
+            }
+            if (m2) {
+                *out_offset = (size_t)(ptr - bytes) + 128 + (size_t)__builtin_ctzll(m2);
+                return true;
+            }
+            *out_offset = (size_t)(ptr - bytes) + 192 + (size_t)__builtin_ctzll(m3);
+            return true;
+        }
+        ptr += 256;
+    }
+
+    while (ptr + 64 <= end) {
+        __m512i v = _mm512_loadu_si512((const __m512i*)ptr);
+        __mmask64 mask = _mm512_cmpeq_epi8_mask(v, target_vec);
+        if (mask != 0) {
+            *out_offset = (size_t)(ptr - bytes) + (size_t)__builtin_ctzll(mask);
+            return true;
+        }
+        ptr += 64;
+    }
+
+    if (ptr < end) {
+        size_t tail = (size_t)(end - ptr);
+        __mmask64 load_mask = (1ULL << tail) - 1ULL;
+        __m512i v = _mm512_maskz_loadu_epi8(load_mask, ptr);
+        __mmask64 mask = _mm512_mask_cmpeq_epi8_mask(load_mask, v, target_vec);
+        if (mask != 0) {
+            *out_offset = (size_t)(ptr - bytes) + (size_t)__builtin_ctzll(mask);
+            return true;
+        }
+    }
+
+    return false;
+}
+
 __attribute__((target("avx2"))) static bool bc_core_find_byte_avx2(const void* data, size_t len, unsigned char target, size_t* out_offset)
 {
     if (len == 0) {
@@ -339,7 +405,10 @@ static bool (*g_find_any_byte_impl)(const void*, size_t, const unsigned char*, s
 
 __attribute__((constructor)) void bc_core_find_dispatch_init(void)
 {
-    g_find_byte_impl = bc_core_find_byte_avx2;
+    bc_core_cpu_features_t features = {0};
+    bool detected = bc_core_cpu_features_detect(&features);
+    bool use_avx512 = detected && features.has_avx512f && features.has_avx512bw;
+    g_find_byte_impl = use_avx512 ? bc_core_find_byte_avx512 : bc_core_find_byte_avx2;
     g_find_pattern_impl = bc_core_find_pattern_avx2;
     g_find_last_byte_impl = bc_core_find_last_byte_avx2;
     g_find_any_byte_impl = bc_core_find_any_byte_avx2;

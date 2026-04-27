@@ -2,10 +2,60 @@
 
 #include "bc_core.h"
 
+#include "bc_core_cpu_features_internal.h"
 #include "bc_core_pattern_internal.h"
 
 #include <immintrin.h>
 #include <stdint.h>
+
+__attribute__((target("avx512f,avx512bw"))) static bool bc_core_count_byte_avx512(const void* data, size_t len, unsigned char target,
+                                                                                  size_t* out_count)
+{
+    if (len == 0) {
+        *out_count = 0;
+        return true;
+    }
+
+    const unsigned char* bytes = (const unsigned char*)data;
+    const unsigned char* ptr = bytes;
+    const unsigned char* end = bytes + len;
+    size_t count = 0;
+    __m512i target_vec = _mm512_set1_epi8((char)target);
+
+    while (ptr + 256 <= end) {
+        __m512i c0 = _mm512_loadu_si512((const __m512i*)(ptr + 0));
+        __m512i c1 = _mm512_loadu_si512((const __m512i*)(ptr + 64));
+        __m512i c2 = _mm512_loadu_si512((const __m512i*)(ptr + 128));
+        __m512i c3 = _mm512_loadu_si512((const __m512i*)(ptr + 192));
+        __mmask64 m0 = _mm512_cmpeq_epi8_mask(c0, target_vec);
+        __mmask64 m1 = _mm512_cmpeq_epi8_mask(c1, target_vec);
+        __mmask64 m2 = _mm512_cmpeq_epi8_mask(c2, target_vec);
+        __mmask64 m3 = _mm512_cmpeq_epi8_mask(c3, target_vec);
+        count += (size_t)__builtin_popcountll(m0);
+        count += (size_t)__builtin_popcountll(m1);
+        count += (size_t)__builtin_popcountll(m2);
+        count += (size_t)__builtin_popcountll(m3);
+        ptr += 256;
+    }
+
+    while (ptr + 64 <= end) {
+        __m512i v = _mm512_loadu_si512((const __m512i*)ptr);
+        __mmask64 mask = _mm512_cmpeq_epi8_mask(v, target_vec);
+        count += (size_t)__builtin_popcountll(mask);
+        ptr += 64;
+    }
+
+    if (ptr < end) {
+        size_t tail = (size_t)(end - ptr);
+        __mmask64 load_mask = (1ULL << tail) - 1ULL;
+        __m512i v = _mm512_maskz_loadu_epi8(load_mask, ptr);
+        __mmask64 mask = _mm512_mask_cmpeq_epi8_mask(load_mask, v, target_vec);
+        count += (size_t)__builtin_popcountll(mask);
+    }
+
+    *out_count = count;
+    return true;
+}
 
 __attribute__((target("avx2"))) static bool bc_core_count_byte_avx2(const void* data, size_t len, unsigned char target, size_t* out_count)
 {
@@ -496,7 +546,10 @@ static bool (*g_count_words_ascii_impl)(const void*, size_t, bool*, size_t*) = b
 
 __attribute__((constructor)) void bc_core_count_dispatch_init(void)
 {
-    g_count_byte_impl = bc_core_count_byte_avx2;
+    bc_core_cpu_features_t features = {0};
+    bool detected = bc_core_cpu_features_detect(&features);
+    bool use_avx512 = detected && features.has_avx512f && features.has_avx512bw;
+    g_count_byte_impl = use_avx512 ? bc_core_count_byte_avx512 : bc_core_count_byte_avx2;
     g_count_matching_impl = bc_core_count_matching_avx2;
     g_count_lines_with_pattern_impl = bc_core_count_lines_with_pattern_avx2;
     g_count_words_impl = bc_core_count_words_avx2;

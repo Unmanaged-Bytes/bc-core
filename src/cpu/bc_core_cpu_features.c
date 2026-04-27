@@ -16,6 +16,8 @@ static void detect_into(bc_core_cpu_features_t* out_features)
 {
     out_features->has_sse2 = false;
     out_features->has_avx2 = false;
+    out_features->has_avx512f = false;
+    out_features->has_avx512bw = false;
     out_features->has_sse42 = false;
     out_features->has_aes = false;
     out_features->has_pclmul = false;
@@ -33,6 +35,8 @@ static void detect_into(bc_core_cpu_features_t* out_features)
     out_features->has_sse42 = (ecx & (1u << 20)) != 0;
     out_features->has_aes = (ecx & (1u << 25)) != 0;
     out_features->has_pclmul = (ecx & (1u << 1)) != 0;
+    bool has_osxsave = (ecx & (1u << 27)) != 0;
+    bool has_avx = (ecx & (1u << 28)) != 0;
 
     eax = 0;
     ebx = 0;
@@ -42,6 +46,17 @@ static void detect_into(bc_core_cpu_features_t* out_features)
     out_features->has_avx2 = (ebx & (1u << 5)) != 0;
     out_features->has_sha = (ebx & (1u << 29)) != 0;
     out_features->has_vpclmul = (ecx & (1u << 10)) != 0;
+
+    bool zmm_state_enabled = false;
+    if (has_osxsave && has_avx) {
+        unsigned long long xcr0 = 0;
+        __asm__ volatile("xgetbv" : "=A"(xcr0) : "c"(0));
+        zmm_state_enabled = (xcr0 & 0xE6ULL) == 0xE6ULL;
+    }
+    if (zmm_state_enabled) {
+        out_features->has_avx512f = (ebx & (1u << 16)) != 0;
+        out_features->has_avx512bw = (ebx & (1u << 30)) != 0;
+    }
 }
 
 bool bc_core_cpu_features_detect(bc_core_cpu_features_t* out_features)

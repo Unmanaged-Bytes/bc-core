@@ -8,6 +8,63 @@
 #include <stddef.h>
 #include <stdint.h>
 
+__attribute__((target("avx512f,avx512bw"), no_sanitize("address"))) static bool length_avx512(const void* data, unsigned char terminator,
+                                                                                                size_t* out_length)
+{
+    const unsigned char* bytes = (const unsigned char*)data;
+    __m512i target_vec = _mm512_set1_epi8((char)terminator);
+
+    const unsigned char* aligned_ptr = (const unsigned char*)((uintptr_t)bytes & ~(uintptr_t)63);
+    size_t prefix_count = (size_t)(bytes - aligned_ptr);
+    __m512i first_block = _mm512_load_si512((const __m512i*)aligned_ptr);
+    __mmask64 first_mask = _mm512_cmpeq_epi8_mask(first_block, target_vec);
+    first_mask >>= prefix_count;
+    if (first_mask != 0) {
+        *out_length = (size_t)__builtin_ctzll(first_mask);
+        return true;
+    }
+
+    const unsigned char* ptr = aligned_ptr + 64;
+
+    while ((uintptr_t)ptr & 255) {
+        __mmask64 mask = _mm512_cmpeq_epi8_mask(_mm512_load_si512((const __m512i*)ptr), target_vec);
+        if (mask) {
+            *out_length = (size_t)(ptr - bytes) + (size_t)__builtin_ctzll(mask);
+            return true;
+        }
+        ptr += 64;
+    }
+
+    for (;;) {
+        __m512i c0 = _mm512_load_si512((const __m512i*)(ptr + 0));
+        __m512i c1 = _mm512_load_si512((const __m512i*)(ptr + 64));
+        __m512i c2 = _mm512_load_si512((const __m512i*)(ptr + 128));
+        __m512i c3 = _mm512_load_si512((const __m512i*)(ptr + 192));
+        __mmask64 m0 = _mm512_cmpeq_epi8_mask(c0, target_vec);
+        __mmask64 m1 = _mm512_cmpeq_epi8_mask(c1, target_vec);
+        __mmask64 m2 = _mm512_cmpeq_epi8_mask(c2, target_vec);
+        __mmask64 m3 = _mm512_cmpeq_epi8_mask(c3, target_vec);
+
+        if ((m0 | m1 | m2 | m3) != 0) {
+            if (m0) {
+                *out_length = (size_t)(ptr - bytes) + (size_t)__builtin_ctzll(m0);
+                return true;
+            }
+            if (m1) {
+                *out_length = (size_t)(ptr - bytes) + 64 + (size_t)__builtin_ctzll(m1);
+                return true;
+            }
+            if (m2) {
+                *out_length = (size_t)(ptr - bytes) + 128 + (size_t)__builtin_ctzll(m2);
+                return true;
+            }
+            *out_length = (size_t)(ptr - bytes) + 192 + (size_t)__builtin_ctzll(m3);
+            return true;
+        }
+        ptr += 256;
+    }
+}
+
 __attribute__((target("avx2"), no_sanitize("address"))) static bool length_avx2(const void* data, unsigned char terminator,
                                                                                 size_t* out_length)
 {
@@ -71,7 +128,14 @@ static bool (*g_length_impl)(const void*, unsigned char, size_t*) = length_avx2;
 
 __attribute__((constructor)) void bc_core_length_dispatch_init(void)
 {
-    g_length_impl = length_avx2;
+    bc_core_cpu_features_t features = {0};
+    bool detected = bc_core_cpu_features_detect(&features);
+    if (detected && features.has_avx512f && features.has_avx512bw) {
+        g_length_impl = length_avx512;
+    }
+    else {
+        g_length_impl = length_avx2;
+    }
 }
 
 bool bc_core_length(const void* data, unsigned char terminator, size_t* out_length)
