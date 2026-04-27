@@ -353,6 +353,26 @@ static void test_fmt_unicode_codepoint_escape_null_out_length(void** state)
     assert_false(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0041U, NULL));
 }
 
+static void test_format_double_negative_zero(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[64];
+    size_t length = 0;
+    double negative_zero = -0.0;
+    assert_true(bc_core_format_double(buffer, sizeof(buffer), negative_zero, 2, &length));
+    assert_int_equal(length, 5);
+    assert_memory_equal(buffer, "-0.00", 5);
+}
+
+static void test_format_bytes_human_max_uint64(void** state)
+{
+    BC_UNUSED(state);
+    char buffer[64];
+    size_t length = 0;
+    assert_true(bc_core_format_bytes_human_readable(buffer, sizeof(buffer), UINT64_MAX, &length));
+    assert_in_range(length, 4, 32);
+}
+
 static void test_format_uint64_dec_capacity_zero(void** state)
 {
     BC_UNUSED(state);
@@ -624,6 +644,8 @@ int main(void)
         cmocka_unit_test(test_fmt_unicode_codepoint_escape_buffer_too_small_supplementary),
         cmocka_unit_test(test_fmt_unicode_codepoint_escape_null_buffer),
         cmocka_unit_test(test_fmt_unicode_codepoint_escape_null_out_length),
+        cmocka_unit_test(test_format_double_negative_zero),
+        cmocka_unit_test(test_format_bytes_human_max_uint64),
         cmocka_unit_test(test_format_uint64_dec_capacity_zero),
         cmocka_unit_test(test_format_uint64_hex_capacity_zero),
         cmocka_unit_test(test_format_signed_integer_64_negative_capacity_one),

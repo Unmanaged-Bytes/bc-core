@@ -190,15 +190,80 @@ static void test_zero_with_policy_over_128(void** state)
     free(dst);
 }
 
+static void test_copy_with_policy_above_l3_default_nt_path(void** state)
+{
+    BC_UNUSED(state);
+    const size_t large_size = 32U * 1024U * 1024U;
+    unsigned char* src = aligned_alloc(64, large_size);
+    unsigned char* dst = aligned_alloc(64, large_size);
+    if (src == NULL || dst == NULL) {
+        free(src);
+        free(dst);
+        skip();
+        return;
+    }
+    for (size_t index = 0; index < large_size; index += 4096U) {
+        src[index] = (unsigned char)(index & 0xFFU);
+    }
+    assert_true(bc_core_copy_with_policy(dst, src, large_size, BC_CORE_CACHE_POLICY_DEFAULT));
+    for (size_t index = 0; index < large_size; index += 4096U) {
+        assert_int_equal(dst[index], src[index]);
+    }
+    free(src);
+    free(dst);
+}
+
+static void test_fill_with_policy_above_l3_default_nt_path(void** state)
+{
+    BC_UNUSED(state);
+    const size_t large_size = 32U * 1024U * 1024U;
+    unsigned char* dst = aligned_alloc(64, large_size);
+    if (dst == NULL) {
+        skip();
+        return;
+    }
+    assert_true(bc_core_fill_with_policy(dst, large_size, 0xC3, BC_CORE_CACHE_POLICY_DEFAULT));
+    for (size_t index = 0; index < large_size; index += 4096U) {
+        assert_int_equal(dst[index], 0xC3);
+    }
+    free(dst);
+}
+
+static void test_zero_with_policy_above_l3_default_nt_path(void** state)
+{
+    BC_UNUSED(state);
+    const size_t large_size = 32U * 1024U * 1024U;
+    unsigned char* dst = aligned_alloc(64, large_size);
+    if (dst == NULL) {
+        skip();
+        return;
+    }
+    memset(dst, 0xFF, large_size);
+    assert_true(bc_core_zero_with_policy(dst, large_size, BC_CORE_CACHE_POLICY_DEFAULT));
+    for (size_t index = 0; index < large_size; index += 4096U) {
+        assert_int_equal(dst[index], 0);
+    }
+    free(dst);
+}
+
 int main(void)
 {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_copy_with_policy_zero_length), cmocka_unit_test(test_copy_with_policy_small_under_32),
-        cmocka_unit_test(test_copy_with_policy_32_to_128),   cmocka_unit_test(test_copy_with_policy_over_128),
-        cmocka_unit_test(test_fill_with_policy_zero_length), cmocka_unit_test(test_fill_with_policy_small_under_32),
-        cmocka_unit_test(test_fill_with_policy_32_to_128),   cmocka_unit_test(test_fill_with_policy_over_128),
-        cmocka_unit_test(test_zero_with_policy_zero_length), cmocka_unit_test(test_zero_with_policy_small_under_32),
-        cmocka_unit_test(test_zero_with_policy_32_to_128),   cmocka_unit_test(test_zero_with_policy_over_128),
+        cmocka_unit_test(test_copy_with_policy_zero_length),
+        cmocka_unit_test(test_copy_with_policy_small_under_32),
+        cmocka_unit_test(test_copy_with_policy_32_to_128),
+        cmocka_unit_test(test_copy_with_policy_over_128),
+        cmocka_unit_test(test_fill_with_policy_zero_length),
+        cmocka_unit_test(test_fill_with_policy_small_under_32),
+        cmocka_unit_test(test_fill_with_policy_32_to_128),
+        cmocka_unit_test(test_fill_with_policy_over_128),
+        cmocka_unit_test(test_zero_with_policy_zero_length),
+        cmocka_unit_test(test_zero_with_policy_small_under_32),
+        cmocka_unit_test(test_zero_with_policy_32_to_128),
+        cmocka_unit_test(test_zero_with_policy_over_128),
+        cmocka_unit_test(test_copy_with_policy_above_l3_default_nt_path),
+        cmocka_unit_test(test_fill_with_policy_above_l3_default_nt_path),
+        cmocka_unit_test(test_zero_with_policy_above_l3_default_nt_path),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
