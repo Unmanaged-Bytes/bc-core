@@ -59,4 +59,13 @@ bool bc_core_copy_with_policy(void* dst, const void* src, size_t len, bc_core_ca
 bool bc_core_fill_with_policy(void* dst, size_t len, unsigned char value, bc_core_cache_policy_t policy);
 bool bc_core_zero_with_policy(void* dst, size_t len, bc_core_cache_policy_t policy);
 
+/* Worker-aware variants: route to the streaming path only when len exceeds
+   the streaming threshold for a host whose L3 is shared by worker_count_hint
+   workers. Pass 0 or 1 for the single-thread default. policy values other
+   than BC_CORE_CACHE_POLICY_AUTO are honoured exactly as in the non-threaded
+   variant; the worker hint only refines the AUTO routing. */
+bool bc_core_copy_with_policy_threaded(void* dst, const void* src, size_t len, bc_core_cache_policy_t policy, size_t worker_count_hint);
+bool bc_core_fill_with_policy_threaded(void* dst, size_t len, unsigned char value, bc_core_cache_policy_t policy, size_t worker_count_hint);
+bool bc_core_zero_with_policy_threaded(void* dst, size_t len, bc_core_cache_policy_t policy, size_t worker_count_hint);
+
 #endif /* BC_CORE_MEMORY_H */

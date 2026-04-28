@@ -2,6 +2,7 @@
 
 #include "bc_core.h"
 
+#include "bc_core_buffer_thresholds_internal.h"
 #include "bc_core_cache_sizes_internal.h"
 #include "bc_core_cpu_features_internal.h"
 
@@ -158,8 +159,9 @@ __attribute__((target("avx2"))) static bool bc_core_fill_avx2(void* dst, size_t 
 
 static bool (*g_fill_impl)(void*, size_t, unsigned char) = bc_core_fill_avx2;
 
-__attribute__((target("avx2"))) static bool bc_core_fill_avx2_with_policy(void* dst, size_t len, unsigned char value,
-                                                                          bc_core_cache_policy_t policy)
+__attribute__((target("avx2"))) static bool bc_core_fill_avx2_with_policy_internal(void* dst, size_t len, unsigned char value,
+                                                                                   bc_core_cache_policy_t policy,
+                                                                                   size_t auto_streaming_threshold_bytes)
 {
     if (len == 0) {
         return true;
@@ -192,9 +194,16 @@ __attribute__((target("avx2"))) static bool bc_core_fill_avx2_with_policy(void* 
     unsigned char* aligned_destination = (unsigned char*)(((uintptr_t)destination + 32) & ~(uintptr_t)31);
     unsigned char* destination_end = destination + len;
 
-    const bool use_nt = (policy == BC_CORE_CACHE_POLICY_STREAMING) ? true
-                        : (policy == BC_CORE_CACHE_POLICY_CACHED)  ? false
-                                                                   : (len > bc_core_cached_l3_cache_size());
+    bool use_nt;
+    if (policy == BC_CORE_CACHE_POLICY_STREAMING) {
+        use_nt = true;
+    } else if (policy == BC_CORE_CACHE_POLICY_CACHED) {
+        use_nt = false;
+    } else if (policy == BC_CORE_CACHE_POLICY_AUTO) {
+        use_nt = (len >= auto_streaming_threshold_bytes);
+    } else {
+        use_nt = (len > bc_core_cached_l3_cache_size());
+    }
 
     if (use_nt) {
         const unsigned char* loop_end = destination_end - 127;
@@ -232,7 +241,8 @@ __attribute__((target("avx2"))) static bool bc_core_fill_avx2_with_policy(void* 
     return true;
 }
 
-static bool (*g_fill_with_policy_impl)(void*, size_t, unsigned char, bc_core_cache_policy_t) = bc_core_fill_avx2_with_policy;
+static bool (*g_fill_with_policy_impl)(void*, size_t, unsigned char, bc_core_cache_policy_t,
+                                       size_t) = bc_core_fill_avx2_with_policy_internal;
 
 __attribute__((constructor)) void bc_core_fill_dispatch_init(void)
 {
@@ -240,11 +250,10 @@ __attribute__((constructor)) void bc_core_fill_dispatch_init(void)
     bool detected = bc_core_cpu_features_detect(&features);
     if (detected && features.has_avx512f && features.has_avx512bw) {
         g_fill_impl = bc_core_fill_avx512;
-    }
-    else {
+    } else {
         g_fill_impl = bc_core_fill_avx2;
     }
-    g_fill_with_policy_impl = bc_core_fill_avx2_with_policy;
+    g_fill_with_policy_impl = bc_core_fill_avx2_with_policy_internal;
 }
 
 bool bc_core_fill(void* dst, size_t len, unsigned char value)
@@ -254,5 +263,12 @@ bool bc_core_fill(void* dst, size_t len, unsigned char value)
 
 bool bc_core_fill_with_policy(void* dst, size_t len, unsigned char value, bc_core_cache_policy_t policy)
 {
-    return g_fill_with_policy_impl(dst, len, value, policy);
+    return g_fill_with_policy_impl(dst, len, value, policy, bc_core_buffer_thresholds_default_fill_streaming_bytes());
+}
+
+bool bc_core_fill_with_policy_threaded(void* dst, size_t len, unsigned char value, bc_core_cache_policy_t policy, size_t worker_count_hint)
+{
+    bc_core_buffer_thresholds_t thresholds;
+    bc_core_buffer_thresholds(worker_count_hint, &thresholds);
+    return g_fill_with_policy_impl(dst, len, value, policy, thresholds.fill_streaming_threshold_bytes);
 }
