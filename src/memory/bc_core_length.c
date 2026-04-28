@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 __attribute__((target("avx512f,avx512bw"), no_sanitize("address"))) static bool length_avx512(const void* data, unsigned char terminator,
-                                                                                                size_t* out_length)
+                                                                                              size_t* out_length)
 {
     const unsigned char* bytes = (const unsigned char*)data;
     __m512i target_vec = _mm512_set1_epi8((char)terminator);
@@ -132,8 +132,7 @@ __attribute__((constructor)) void bc_core_length_dispatch_init(void)
     bool detected = bc_core_cpu_features_detect(&features);
     if (detected && features.has_avx512f && features.has_avx512bw) {
         g_length_impl = length_avx512;
-    }
-    else {
+    } else {
         g_length_impl = length_avx2;
     }
 }

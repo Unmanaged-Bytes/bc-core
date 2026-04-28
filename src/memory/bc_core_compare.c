@@ -154,8 +154,7 @@ __attribute__((constructor)) void bc_core_compare_dispatch_init(void)
     bool detected = bc_core_cpu_features_detect(&features);
     if (detected && features.has_avx512f && features.has_avx512bw) {
         g_compare_impl = bc_core_compare_avx512;
-    }
-    else {
+    } else {
         g_compare_impl = bc_core_compare_avx2;
     }
 }
