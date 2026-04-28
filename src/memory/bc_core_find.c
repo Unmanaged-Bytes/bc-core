@@ -19,7 +19,7 @@ static bool verify_pattern_candidate(const unsigned char* haystack, const unsign
 }
 
 __attribute__((target("avx512f,avx512bw"))) static bool bc_core_find_byte_avx512(const void* data, size_t len, unsigned char target,
-                                                                                  size_t* out_offset)
+                                                                                 size_t* out_offset)
 {
     if (len == 0) {
         return false;

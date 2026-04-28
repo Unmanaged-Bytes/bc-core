@@ -21,3 +21,11 @@ benchmark('bench_bc_core_sort',
     ),
     timeout : 120,
 )
+
+benchmark('bench_bc_core_thresholds',
+    executable('bench_bc_core_thresholds', 'bench_bc_core_thresholds.c',
+        include_directories : bc_core_public_inc,
+        dependencies : [bc_core_dep, dependency('threads')],
+    ),
+    timeout : 600,
+)

@@ -7,8 +7,7 @@
 #include <immintrin.h>
 #include <stdint.h>
 
-__attribute__((target("avx512f,avx512bw"))) static bool bc_core_equal_avx512(const void* a, const void* b, size_t len,
-                                                                             bool* out_equal)
+__attribute__((target("avx512f,avx512bw"))) static bool bc_core_equal_avx512(const void* a, const void* b, size_t len, bool* out_equal)
 {
     if (len == 0) {
         *out_equal = true;
@@ -136,8 +135,7 @@ __attribute__((constructor)) void bc_core_equal_dispatch_init(void)
     bool detected = bc_core_cpu_features_detect(&features);
     if (detected && features.has_avx512f && features.has_avx512bw) {
         g_equal_impl = bc_core_equal_avx512;
-    }
-    else {
+    } else {
         g_equal_impl = bc_core_equal_avx2;
     }
 }

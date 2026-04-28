@@ -2,6 +2,7 @@
 
 #include "bc_core.h"
 
+#include "bc_core_buffer_thresholds_internal.h"
 #include "bc_core_cache_sizes_internal.h"
 #include "bc_core_cpu_features_internal.h"
 
@@ -210,8 +211,9 @@ __attribute__((target("avx2"))) static bool bc_core_copy_avx2(void* dst, const v
 
 static bool (*g_copy_impl)(void*, const void*, size_t) = bc_core_copy_avx2;
 
-__attribute__((target("avx2"))) static bool bc_core_copy_avx2_with_policy(void* dst, const void* src, size_t len,
-                                                                          bc_core_cache_policy_t policy)
+__attribute__((target("avx2"))) static bool bc_core_copy_avx2_with_policy_internal(void* dst, const void* src, size_t len,
+                                                                                   bc_core_cache_policy_t policy,
+                                                                                   size_t auto_streaming_threshold_bytes)
 {
     if (len == 0) {
         return true;
@@ -245,11 +247,18 @@ __attribute__((target("avx2"))) static bool bc_core_copy_avx2_with_policy(void* 
     }
 
     const size_t l3_cache_size = bc_core_cached_l3_cache_size();
-    const size_t nt_threshold = (l3_cache_size > 0) ? l3_cache_size / 2 : (4 * 1024 * 1024);
+    const size_t default_nt_threshold = (l3_cache_size > 0) ? l3_cache_size / 2 : (4 * 1024 * 1024);
 
-    const bool use_nt = (policy == BC_CORE_CACHE_POLICY_STREAMING) ? true
-                        : (policy == BC_CORE_CACHE_POLICY_CACHED)  ? false
-                                                                   : (len > nt_threshold);
+    bool use_nt;
+    if (policy == BC_CORE_CACHE_POLICY_STREAMING) {
+        use_nt = true;
+    } else if (policy == BC_CORE_CACHE_POLICY_CACHED) {
+        use_nt = false;
+    } else if (policy == BC_CORE_CACHE_POLICY_AUTO) {
+        use_nt = (len >= auto_streaming_threshold_bytes);
+    } else {
+        use_nt = (len > default_nt_threshold);
+    }
 
     __m256i head_chunk = _mm256_loadu_si256((const __m256i*)source);
     _mm256_storeu_si256((__m256i*)destination, head_chunk);
@@ -309,7 +318,7 @@ __attribute__((target("avx2"))) static bool bc_core_copy_avx2_with_policy(void* 
     return true;
 }
 
-static bool (*g_copy_with_policy_impl)(void*, const void*, size_t, bc_core_cache_policy_t) = bc_core_copy_avx2_with_policy;
+static bool (*g_copy_with_policy_impl)(void*, const void*, size_t, bc_core_cache_policy_t, size_t) = bc_core_copy_avx2_with_policy_internal;
 
 __attribute__((constructor)) void bc_core_copy_dispatch_init(void)
 {
@@ -317,11 +326,10 @@ __attribute__((constructor)) void bc_core_copy_dispatch_init(void)
     bool detected = bc_core_cpu_features_detect(&features);
     if (detected && features.has_avx512f && features.has_avx512bw) {
         g_copy_impl = bc_core_copy_avx512;
-    }
-    else {
+    } else {
         g_copy_impl = bc_core_copy_avx2;
     }
-    g_copy_with_policy_impl = bc_core_copy_avx2_with_policy;
+    g_copy_with_policy_impl = bc_core_copy_avx2_with_policy_internal;
 }
 
 bool bc_core_copy(void* dst, const void* src, size_t len)
@@ -331,5 +339,12 @@ bool bc_core_copy(void* dst, const void* src, size_t len)
 
 bool bc_core_copy_with_policy(void* dst, const void* src, size_t len, bc_core_cache_policy_t policy)
 {
-    return g_copy_with_policy_impl(dst, src, len, policy);
+    return g_copy_with_policy_impl(dst, src, len, policy, bc_core_buffer_thresholds_default_copy_streaming_bytes());
+}
+
+bool bc_core_copy_with_policy_threaded(void* dst, const void* src, size_t len, bc_core_cache_policy_t policy, size_t worker_count_hint)
+{
+    bc_core_buffer_thresholds_t thresholds;
+    bc_core_buffer_thresholds(worker_count_hint, &thresholds);
+    return g_copy_with_policy_impl(dst, src, len, policy, thresholds.copy_streaming_threshold_bytes);
 }
