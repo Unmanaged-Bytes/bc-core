@@ -257,6 +257,19 @@ test_bc_core_buffer_constants = executable('test_bc_core_buffer_constants',
 )
 test('buffer_constants', test_bc_core_buffer_constants)
 
+test_bc_core_buffer_thresholds_wrap = executable('test_bc_core_buffer_thresholds_wrap',
+    'test_bc_core_buffer_thresholds_wrap.c',
+    cpu_dir + '/bc_core_buffer_thresholds.c',
+    include_directories : [bc_core_internal_inc],
+    dependencies : [bc_core_dep, cmocka_dep],
+    link_args : [
+        '-Wl,--wrap=bc_core_l1d_cache_size',
+        '-Wl,--wrap=bc_core_l2_cache_size',
+        '-Wl,--wrap=bc_core_l3_cache_size',
+    ],
+)
+test('buffer_thresholds_wrap', test_bc_core_buffer_thresholds_wrap)
+
 test_bc_core_pad_to_cache_line = executable('test_bc_core_pad_to_cache_line',
     'test_bc_core_pad_to_cache_line.c',
     dependencies : [bc_core_dep, cmocka_dep],
