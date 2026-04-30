@@ -38,3 +38,6 @@ debian/tmp/
 *.deb
 *.buildinfo
 *.changes
+
+reports/
+.bc-validate-status
