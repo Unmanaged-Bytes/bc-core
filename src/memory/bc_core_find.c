@@ -147,6 +147,112 @@ __attribute__((target("avx2"))) static bool bc_core_find_byte_avx2(const void* d
     return false;
 }
 
+__attribute__((target("avx512f,avx512bw"))) static bool bc_core_find_pattern_avx512(const void* data, size_t len, const void* pattern,
+                                                                                    size_t pattern_len, size_t* out_offset)
+{
+    if (pattern_len == 0 || len == 0) {
+        return false;
+    }
+    if (pattern_len == 1) {
+        return bc_core_find_byte(data, len, *(const unsigned char*)pattern, out_offset);
+    }
+    if (pattern_len > len) {
+        return false;
+    }
+
+    const unsigned char* hay = (const unsigned char*)data;
+    const unsigned char* needle = (const unsigned char*)pattern;
+    unsigned char first = needle[0];
+    unsigned char last = needle[pattern_len - 1];
+    __m512i first_vec = _mm512_set1_epi8((char)first);
+    __m512i last_vec = _mm512_set1_epi8((char)last);
+    size_t simd_end = len - (pattern_len - 1);
+    size_t offset = 0;
+
+    while (offset + 256 <= simd_end) {
+        __m512i a0 = _mm512_loadu_si512((const __m512i*)(hay + offset + 0));
+        __m512i b0 = _mm512_loadu_si512((const __m512i*)(hay + offset + 0 + pattern_len - 1));
+        __m512i a1 = _mm512_loadu_si512((const __m512i*)(hay + offset + 64));
+        __m512i b1 = _mm512_loadu_si512((const __m512i*)(hay + offset + 64 + pattern_len - 1));
+        __m512i a2 = _mm512_loadu_si512((const __m512i*)(hay + offset + 128));
+        __m512i b2 = _mm512_loadu_si512((const __m512i*)(hay + offset + 128 + pattern_len - 1));
+        __m512i a3 = _mm512_loadu_si512((const __m512i*)(hay + offset + 192));
+        __m512i b3 = _mm512_loadu_si512((const __m512i*)(hay + offset + 192 + pattern_len - 1));
+
+        __mmask64 m0 = _mm512_cmpeq_epi8_mask(a0, first_vec) & _mm512_cmpeq_epi8_mask(b0, last_vec);
+        __mmask64 m1 = _mm512_cmpeq_epi8_mask(a1, first_vec) & _mm512_cmpeq_epi8_mask(b1, last_vec);
+        __mmask64 m2 = _mm512_cmpeq_epi8_mask(a2, first_vec) & _mm512_cmpeq_epi8_mask(b2, last_vec);
+        __mmask64 m3 = _mm512_cmpeq_epi8_mask(a3, first_vec) & _mm512_cmpeq_epi8_mask(b3, last_vec);
+
+        if ((m0 | m1 | m2 | m3) != 0) {
+            __mmask64 mask;
+            mask = m0;
+            while (mask != 0) {
+                size_t bit = (size_t)__builtin_ctzll(mask);
+                size_t candidate = offset + 0 + bit;
+                if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
+                    return true;
+                }
+                mask &= mask - 1;
+            }
+            mask = m1;
+            while (mask != 0) {
+                size_t bit = (size_t)__builtin_ctzll(mask);
+                size_t candidate = offset + 64 + bit;
+                if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
+                    return true;
+                }
+                mask &= mask - 1;
+            }
+            mask = m2;
+            while (mask != 0) {
+                size_t bit = (size_t)__builtin_ctzll(mask);
+                size_t candidate = offset + 128 + bit;
+                if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
+                    return true;
+                }
+                mask &= mask - 1;
+            }
+            mask = m3;
+            while (mask != 0) {
+                size_t bit = (size_t)__builtin_ctzll(mask);
+                size_t candidate = offset + 192 + bit;
+                if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
+                    return true;
+                }
+                mask &= mask - 1;
+            }
+        }
+        offset += 256;
+    }
+
+    while (offset + 64 <= simd_end) {
+        __m512i fc = _mm512_loadu_si512((const __m512i*)(hay + offset));
+        __m512i lc = _mm512_loadu_si512((const __m512i*)(hay + offset + pattern_len - 1));
+        __mmask64 mask = _mm512_cmpeq_epi8_mask(fc, first_vec) & _mm512_cmpeq_epi8_mask(lc, last_vec);
+
+        while (mask != 0) {
+            size_t bit = (size_t)__builtin_ctzll(mask);
+            size_t candidate = offset + bit;
+            if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
+                return true;
+            }
+            mask &= mask - 1;
+        }
+        offset += 64;
+    }
+
+    while (offset + pattern_len <= len) {
+        if (hay[offset] == first && hay[offset + pattern_len - 1] == last &&
+            verify_pattern_candidate(hay, needle, pattern_len, offset, out_offset)) {
+            return true;
+        }
+        offset++;
+    }
+
+    return false;
+}
+
 __attribute__((target("avx2"))) static bool bc_core_find_pattern_avx2(const void* data, size_t len, const void* pattern, size_t pattern_len,
                                                                       size_t* out_offset)
 {
@@ -409,7 +515,7 @@ __attribute__((constructor)) void bc_core_find_dispatch_init(void)
     bool detected = bc_core_cpu_features_detect(&features);
     bool use_avx512 = detected && features.has_avx512f && features.has_avx512bw;
     g_find_byte_impl = use_avx512 ? bc_core_find_byte_avx512 : bc_core_find_byte_avx2;
-    g_find_pattern_impl = bc_core_find_pattern_avx2;
+    g_find_pattern_impl = use_avx512 ? bc_core_find_pattern_avx512 : bc_core_find_pattern_avx2;
     g_find_last_byte_impl = bc_core_find_last_byte_avx2;
     g_find_any_byte_impl = bc_core_find_any_byte_avx2;
 }
