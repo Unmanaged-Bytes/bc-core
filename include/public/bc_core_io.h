@@ -33,6 +33,18 @@ bool bc_core_writer_write_error_description(bc_core_writer_t* writer, bc_core_er
 
 #define BC_CORE_WRITER_PUTS(writer, literal) bc_core_writer_write_bytes((writer), (literal), sizeof(literal) - 1U)
 
+/* Typed-emit helpers: format a value into a stack scratch then emit via the writer. */
+bool bc_core_writer_write_unsigned_integer_64_decimal(bc_core_writer_t* writer, uint64_t value);
+bool bc_core_writer_write_unsigned_integer_64_hexadecimal(bc_core_writer_t* writer, uint64_t value);
+bool bc_core_writer_write_unsigned_integer_64_hexadecimal_padded(bc_core_writer_t* writer, uint64_t value, size_t digits);
+bool bc_core_writer_write_signed_integer_64(bc_core_writer_t* writer, int64_t value);
+bool bc_core_writer_write_double(bc_core_writer_t* writer, double value, int frac_digits);
+/* Writer variant of bc_core_format_double_shortest_round_trip. */
+bool bc_core_writer_write_double_shortest_round_trip(bc_core_writer_t* writer, double value);
+bool bc_core_writer_write_bytes_human_readable(bc_core_writer_t* writer, uint64_t bytes);
+bool bc_core_writer_write_duration_nanoseconds(bc_core_writer_t* writer, uint64_t nanoseconds);
+bool bc_core_writer_write_unicode_codepoint_escape(bc_core_writer_t* writer, uint32_t codepoint);
+
 typedef struct bc_core_reader {
     int fd;
     int eof_latched;
