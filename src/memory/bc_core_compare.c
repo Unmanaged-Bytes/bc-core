@@ -3,6 +3,7 @@
 #include "bc_core.h"
 
 #include "bc_core_cpu_features_internal.h"
+#include "bc_core_simd_scan_internal.h"
 
 #include <immintrin.h>
 #include <stdint.h>
@@ -26,60 +27,19 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_compare_avx512(c
         return true;
     }
 
+    size_t first_diff_offset = 0;
+    if (!bc_core_simd_scan_first_diff_avx512(a, b, len, &first_diff_offset)) {
+        return false;
+    }
+
+    if (first_diff_offset == len) {
+        *out_result = 0;
+        return true;
+    }
+
     const unsigned char* pointer_a = (const unsigned char*)a;
     const unsigned char* pointer_b = (const unsigned char*)b;
-    size_t offset = 0;
-
-    while (offset + 256 <= len) {
-        __m512i a0 = _mm512_loadu_si512((const __m512i*)(pointer_a + offset));
-        __m512i a1 = _mm512_loadu_si512((const __m512i*)(pointer_a + offset + 64));
-        __m512i a2 = _mm512_loadu_si512((const __m512i*)(pointer_a + offset + 128));
-        __m512i a3 = _mm512_loadu_si512((const __m512i*)(pointer_a + offset + 192));
-        __m512i b0 = _mm512_loadu_si512((const __m512i*)(pointer_b + offset));
-        __m512i b1 = _mm512_loadu_si512((const __m512i*)(pointer_b + offset + 64));
-        __m512i b2 = _mm512_loadu_si512((const __m512i*)(pointer_b + offset + 128));
-        __m512i b3 = _mm512_loadu_si512((const __m512i*)(pointer_b + offset + 192));
-
-        __mmask64 m0 = _mm512_cmpneq_epi8_mask(a0, b0);
-        __mmask64 m1 = _mm512_cmpneq_epi8_mask(a1, b1);
-        __mmask64 m2 = _mm512_cmpneq_epi8_mask(a2, b2);
-        __mmask64 m3 = _mm512_cmpneq_epi8_mask(a3, b3);
-
-        if ((m0 | m1 | m2 | m3) != 0) {
-            *out_result = compare_first_diff_byte(pointer_a, pointer_b, offset, 256);
-            return true;
-        }
-        offset += 256;
-    }
-
-    while (offset + 64 <= len) {
-        __m512i chunk_a = _mm512_loadu_si512((const __m512i*)(pointer_a + offset));
-        __m512i chunk_b = _mm512_loadu_si512((const __m512i*)(pointer_b + offset));
-        __mmask64 mismatch = _mm512_cmpneq_epi8_mask(chunk_a, chunk_b);
-        if (mismatch != 0) {
-            int position = __builtin_ctzll(mismatch);
-            size_t absolute = offset + (size_t)position;
-            *out_result = pointer_a[absolute] < pointer_b[absolute] ? -1 : 1;
-            return true;
-        }
-        offset += 64;
-    }
-
-    if (offset < len) {
-        size_t tail = len - offset;
-        __mmask64 mask = (1ULL << tail) - 1ULL;
-        __m512i chunk_a = _mm512_maskz_loadu_epi8(mask, pointer_a + offset);
-        __m512i chunk_b = _mm512_maskz_loadu_epi8(mask, pointer_b + offset);
-        __mmask64 mismatch = _mm512_mask_cmpneq_epi8_mask(mask, chunk_a, chunk_b);
-        if (mismatch != 0) {
-            int position = __builtin_ctzll(mismatch);
-            size_t absolute = offset + (size_t)position;
-            *out_result = pointer_a[absolute] < pointer_b[absolute] ? -1 : 1;
-            return true;
-        }
-    }
-
-    *out_result = 0;
+    *out_result = pointer_a[first_diff_offset] < pointer_b[first_diff_offset] ? -1 : 1;
     return true;
 }
 

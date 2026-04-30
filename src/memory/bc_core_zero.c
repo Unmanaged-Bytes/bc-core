@@ -2,6 +2,7 @@
 
 #include "bc_core.h"
 
+#include "bc_core_align_prologue_internal.h"
 #include "bc_core_buffer_thresholds_internal.h"
 #include "bc_core_cache_sizes_internal.h"
 #include "bc_core_cpu_features_internal.h"
@@ -46,10 +47,10 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_zero_avx512(void
 
     _mm512_storeu_si512((__m512i*)destination, zero_vector);
 
-    unsigned char* aligned_destination = (unsigned char*)(((uintptr_t)destination + 64) & ~(uintptr_t)63);
+    unsigned char* aligned_destination = destination + bc_core_simd_align_dst_to_64_offset(destination);
     unsigned char* destination_end = destination + len;
 
-    if (len > bc_core_cached_l3_cache_size()) {
+    if (bc_core_simd_should_stream_above_l3(len)) {
         /* GCOVR_EXCL_START -- NT stores > L3, tested by benchmarks */
         const unsigned char* loop_end = destination_end - 255;
         while (aligned_destination < loop_end) {

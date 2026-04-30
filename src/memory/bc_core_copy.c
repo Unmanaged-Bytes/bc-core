@@ -2,6 +2,7 @@
 
 #include "bc_core.h"
 
+#include "bc_core_align_prologue_internal.h"
 #include "bc_core_buffer_thresholds_internal.h"
 #include "bc_core_cache_sizes_internal.h"
 #include "bc_core_cpu_features_internal.h"
@@ -50,18 +51,15 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_copy_avx512(void
         return true;
     }
 
-    const size_t l3_cache_size = bc_core_cached_l3_cache_size();
-    const size_t nt_threshold = (l3_cache_size > 0) ? l3_cache_size / 2 : (4 * 1024 * 1024);
-
     __m512i head_chunk = _mm512_loadu_si512((const __m512i*)source);
     _mm512_storeu_si512((__m512i*)destination, head_chunk);
 
-    unsigned char* aligned_destination = (unsigned char*)(((uintptr_t)destination + 64) & ~(uintptr_t)63);
-    size_t head_byte_count = (size_t)(aligned_destination - destination);
+    size_t head_byte_count = bc_core_simd_align_dst_to_64_offset(destination);
+    unsigned char* aligned_destination = destination + head_byte_count;
     const unsigned char* source_at_aligned = source + head_byte_count;
     unsigned char* destination_end = destination + len;
 
-    if (len > nt_threshold) {
+    if (bc_core_simd_should_stream_above_half_l3(len)) {
         /* GCOVR_EXCL_START -- NT stores > L3/2, tested by benchmarks */
         const unsigned char* loop_end = destination_end - 255;
         while (aligned_destination < loop_end) {
