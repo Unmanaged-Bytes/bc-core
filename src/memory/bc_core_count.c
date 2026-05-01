@@ -251,7 +251,7 @@ __attribute__((target("avx2"))) static bool bc_core_count_lines_with_pattern_avx
         if (newline_mask == 0) {
             if (!current_line_has_match) {
                 while (candidate_mask != 0) {
-                    int bit_position = __builtin_ctz(candidate_mask);
+                    int bit_position = bc_core_ctz_u32((uint32_t)candidate_mask);
                     candidate_mask &= candidate_mask - 1;
                     size_t absolute_position = offset + (size_t)bit_position;
                     if (bc_core_pattern_matches(bytes + absolute_position, needle, pattern_len)) {
@@ -265,12 +265,12 @@ __attribute__((target("avx2"))) static bool bc_core_count_lines_with_pattern_avx
         }
 
         while (newline_mask != 0) {
-            int newline_bit = __builtin_ctz(newline_mask);
+            int newline_bit = bc_core_ctz_u32((uint32_t)newline_mask);
             unsigned int candidates_before_newline = candidate_mask & ((1u << newline_bit) - 1);
 
             if (!current_line_has_match && candidates_before_newline != 0) {
                 while (candidates_before_newline != 0) {
-                    int bit_position = __builtin_ctz(candidates_before_newline);
+                    int bit_position = bc_core_ctz_u32((uint32_t)candidates_before_newline);
                     candidates_before_newline &= candidates_before_newline - 1;
                     size_t absolute_position = offset + (size_t)bit_position;
                     if (bc_core_pattern_matches(bytes + absolute_position, needle, pattern_len)) {
@@ -290,7 +290,7 @@ __attribute__((target("avx2"))) static bool bc_core_count_lines_with_pattern_avx
 
         if (candidate_mask != 0) {
             while (candidate_mask != 0) {
-                int bit_position = __builtin_ctz(candidate_mask);
+                int bit_position = bc_core_ctz_u32((uint32_t)candidate_mask);
                 candidate_mask &= candidate_mask - 1;
                 size_t absolute_position = offset + (size_t)bit_position;
                 if (bc_core_pattern_matches(bytes + absolute_position, needle, pattern_len)) {
@@ -402,7 +402,7 @@ __attribute__((target("avx2"))) static bool bc_core_count_words_avx2(const void*
         }
 
         while (lead_mask_val != 0) {
-            int pos = __builtin_ctz(lead_mask_val);
+            int pos = bc_core_ctz_u32((uint32_t)lead_mask_val);
             lead_mask_val &= lead_mask_val - 1;
             const unsigned char* lead_ptr = ptr + pos;
             size_t remaining = (size_t)(end - lead_ptr);

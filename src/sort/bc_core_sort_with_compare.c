@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "bc_core_sort.h"
+#include "bc_core_math.h"
 #include "bc_core_memory.h"
 
 #include <stdint.h>
@@ -22,33 +23,33 @@ __attribute__((always_inline)) static inline void bc_core_sort_swap_fast(unsigne
     if (element_size == 8U) {
         uint64_t buffer_a;
         uint64_t buffer_b;
-        __builtin_memcpy(&buffer_a, a, 8U);
-        __builtin_memcpy(&buffer_b, b, 8U);
-        __builtin_memcpy(a, &buffer_b, 8U);
-        __builtin_memcpy(b, &buffer_a, 8U);
+        bc_core_memcpy(&buffer_a, a, 8U);
+        bc_core_memcpy(&buffer_b, b, 8U);
+        bc_core_memcpy(a, &buffer_b, 8U);
+        bc_core_memcpy(b, &buffer_a, 8U);
         return;
     }
     if (element_size == 4U) {
         uint32_t buffer_a;
         uint32_t buffer_b;
-        __builtin_memcpy(&buffer_a, a, 4U);
-        __builtin_memcpy(&buffer_b, b, 4U);
-        __builtin_memcpy(a, &buffer_b, 4U);
-        __builtin_memcpy(b, &buffer_a, 4U);
+        bc_core_memcpy(&buffer_a, a, 4U);
+        bc_core_memcpy(&buffer_b, b, 4U);
+        bc_core_memcpy(a, &buffer_b, 4U);
+        bc_core_memcpy(b, &buffer_a, 4U);
         return;
     }
     if (element_size <= 16U) {
         unsigned char buffer[16];
-        __builtin_memcpy(buffer, a, element_size);
-        __builtin_memcpy(a, b, element_size);
-        __builtin_memcpy(b, buffer, element_size);
+        bc_core_memcpy(buffer, a, element_size);
+        bc_core_memcpy(a, b, element_size);
+        bc_core_memcpy(b, buffer, element_size);
         return;
     }
     if (element_size <= 32U) {
         unsigned char buffer[32];
-        __builtin_memcpy(buffer, a, element_size);
-        __builtin_memcpy(a, b, element_size);
-        __builtin_memcpy(b, buffer, element_size);
+        bc_core_memcpy(buffer, a, element_size);
+        bc_core_memcpy(a, b, element_size);
+        bc_core_memcpy(b, buffer, element_size);
         return;
     }
     (void)bc_core_swap(a, b, element_size);

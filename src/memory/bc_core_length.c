@@ -20,7 +20,7 @@ __attribute__((target("avx512f,avx512bw"), no_sanitize("address"))) static bool 
     __mmask64 first_mask = _mm512_cmpeq_epi8_mask(first_block, target_vec);
     first_mask >>= prefix_count;
     if (first_mask != 0) {
-        *out_length = (size_t)__builtin_ctzll(first_mask);
+        *out_length = (size_t)bc_core_ctz_u64((uint64_t)first_mask);
         return true;
     }
 
@@ -29,7 +29,7 @@ __attribute__((target("avx512f,avx512bw"), no_sanitize("address"))) static bool 
     while ((uintptr_t)ptr & 255) {
         __mmask64 mask = _mm512_cmpeq_epi8_mask(_mm512_load_si512((const __m512i*)ptr), target_vec);
         if (mask) {
-            *out_length = (size_t)(ptr - bytes) + (size_t)__builtin_ctzll(mask);
+            *out_length = (size_t)(ptr - bytes) + (size_t)bc_core_ctz_u64((uint64_t)mask);
             return true;
         }
         ptr += 64;
@@ -47,18 +47,18 @@ __attribute__((target("avx512f,avx512bw"), no_sanitize("address"))) static bool 
 
         if ((m0 | m1 | m2 | m3) != 0) {
             if (m0) {
-                *out_length = (size_t)(ptr - bytes) + (size_t)__builtin_ctzll(m0);
+                *out_length = (size_t)(ptr - bytes) + (size_t)bc_core_ctz_u64((uint64_t)m0);
                 return true;
             }
             if (m1) {
-                *out_length = (size_t)(ptr - bytes) + 64 + (size_t)__builtin_ctzll(m1);
+                *out_length = (size_t)(ptr - bytes) + 64 + (size_t)bc_core_ctz_u64((uint64_t)m1);
                 return true;
             }
             if (m2) {
-                *out_length = (size_t)(ptr - bytes) + 128 + (size_t)__builtin_ctzll(m2);
+                *out_length = (size_t)(ptr - bytes) + 128 + (size_t)bc_core_ctz_u64((uint64_t)m2);
                 return true;
             }
-            *out_length = (size_t)(ptr - bytes) + 192 + (size_t)__builtin_ctzll(m3);
+            *out_length = (size_t)(ptr - bytes) + 192 + (size_t)bc_core_ctz_u64((uint64_t)m3);
             return true;
         }
         ptr += 256;
@@ -77,7 +77,7 @@ __attribute__((target("avx2"), no_sanitize("address"))) static bool length_avx2(
     unsigned int first_mask = (unsigned int)_mm256_movemask_epi8(_mm256_cmpeq_epi8(first_block, target_vec));
     first_mask >>= prefix_count;
     if (first_mask != 0) {
-        *out_length = (size_t)__builtin_ctz(first_mask);
+        *out_length = (size_t)bc_core_ctz_u32((uint32_t)first_mask);
         return true;
     }
 
@@ -86,7 +86,7 @@ __attribute__((target("avx2"), no_sanitize("address"))) static bool length_avx2(
     while ((uintptr_t)ptr & 127) {
         unsigned int mask = (unsigned int)_mm256_movemask_epi8(_mm256_cmpeq_epi8(_mm256_load_si256((const __m256i*)ptr), target_vec));
         if (mask) {
-            *out_length = (size_t)(ptr - bytes) + (size_t)__builtin_ctz(mask);
+            *out_length = (size_t)(ptr - bytes) + (size_t)bc_core_ctz_u32((uint32_t)mask);
             return true;
         }
         ptr += 32;
@@ -103,21 +103,21 @@ __attribute__((target("avx2"), no_sanitize("address"))) static bool length_avx2(
             unsigned int mask;
             mask = (unsigned int)_mm256_movemask_epi8(v0);
             if (mask) {
-                *out_length = (size_t)(ptr - bytes) + (size_t)__builtin_ctz(mask);
+                *out_length = (size_t)(ptr - bytes) + (size_t)bc_core_ctz_u32((uint32_t)mask);
                 return true;
             }
             mask = (unsigned int)_mm256_movemask_epi8(v1);
             if (mask) {
-                *out_length = (size_t)(ptr - bytes) + 32 + (size_t)__builtin_ctz(mask);
+                *out_length = (size_t)(ptr - bytes) + 32 + (size_t)bc_core_ctz_u32((uint32_t)mask);
                 return true;
             }
             mask = (unsigned int)_mm256_movemask_epi8(v2);
             if (mask) {
-                *out_length = (size_t)(ptr - bytes) + 64 + (size_t)__builtin_ctz(mask);
+                *out_length = (size_t)(ptr - bytes) + 64 + (size_t)bc_core_ctz_u32((uint32_t)mask);
                 return true;
             }
             mask = (unsigned int)_mm256_movemask_epi8(v3);
-            *out_length = (size_t)(ptr - bytes) + 96 + (size_t)__builtin_ctz(mask);
+            *out_length = (size_t)(ptr - bytes) + 96 + (size_t)bc_core_ctz_u32((uint32_t)mask);
             return true;
         }
         ptr += 128;

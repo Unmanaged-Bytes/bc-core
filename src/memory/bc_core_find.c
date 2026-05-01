@@ -43,18 +43,18 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_find_byte_avx512
 
         if ((m0 | m1 | m2 | m3) != 0) {
             if (m0) {
-                *out_offset = (size_t)(ptr - bytes) + 0 + (size_t)__builtin_ctzll(m0);
+                *out_offset = (size_t)(ptr - bytes) + 0 + (size_t)bc_core_ctz_u64((uint64_t)m0);
                 return true;
             }
             if (m1) {
-                *out_offset = (size_t)(ptr - bytes) + 64 + (size_t)__builtin_ctzll(m1);
+                *out_offset = (size_t)(ptr - bytes) + 64 + (size_t)bc_core_ctz_u64((uint64_t)m1);
                 return true;
             }
             if (m2) {
-                *out_offset = (size_t)(ptr - bytes) + 128 + (size_t)__builtin_ctzll(m2);
+                *out_offset = (size_t)(ptr - bytes) + 128 + (size_t)bc_core_ctz_u64((uint64_t)m2);
                 return true;
             }
-            *out_offset = (size_t)(ptr - bytes) + 192 + (size_t)__builtin_ctzll(m3);
+            *out_offset = (size_t)(ptr - bytes) + 192 + (size_t)bc_core_ctz_u64((uint64_t)m3);
             return true;
         }
         ptr += 256;
@@ -64,7 +64,7 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_find_byte_avx512
         __m512i v = _mm512_loadu_si512((const __m512i*)ptr);
         __mmask64 mask = _mm512_cmpeq_epi8_mask(v, target_vec);
         if (mask != 0) {
-            *out_offset = (size_t)(ptr - bytes) + (size_t)__builtin_ctzll(mask);
+            *out_offset = (size_t)(ptr - bytes) + (size_t)bc_core_ctz_u64((uint64_t)mask);
             return true;
         }
         ptr += 64;
@@ -76,7 +76,7 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_find_byte_avx512
         __m512i v = _mm512_maskz_loadu_epi8(load_mask, ptr);
         __mmask64 mask = _mm512_mask_cmpeq_epi8_mask(load_mask, v, target_vec);
         if (mask != 0) {
-            *out_offset = (size_t)(ptr - bytes) + (size_t)__builtin_ctzll(mask);
+            *out_offset = (size_t)(ptr - bytes) + (size_t)bc_core_ctz_u64((uint64_t)mask);
             return true;
         }
     }
@@ -106,21 +106,21 @@ __attribute__((target("avx2"))) static bool bc_core_find_byte_avx2(const void* d
             int m;
             m = _mm256_movemask_epi8(v0);
             if (m) {
-                *out_offset = (size_t)(ptr - bytes) + 0 + (size_t)__builtin_ctz((unsigned int)m);
+                *out_offset = (size_t)(ptr - bytes) + 0 + (size_t)bc_core_ctz_u32((uint32_t)(unsigned int)m);
                 return true;
             }
             m = _mm256_movemask_epi8(v1);
             if (m) {
-                *out_offset = (size_t)(ptr - bytes) + 32 + (size_t)__builtin_ctz((unsigned int)m);
+                *out_offset = (size_t)(ptr - bytes) + 32 + (size_t)bc_core_ctz_u32((uint32_t)(unsigned int)m);
                 return true;
             }
             m = _mm256_movemask_epi8(v2);
             if (m) {
-                *out_offset = (size_t)(ptr - bytes) + 64 + (size_t)__builtin_ctz((unsigned int)m);
+                *out_offset = (size_t)(ptr - bytes) + 64 + (size_t)bc_core_ctz_u32((uint32_t)(unsigned int)m);
                 return true;
             }
             m = _mm256_movemask_epi8(v3);
-            *out_offset = (size_t)(ptr - bytes) + 96 + (size_t)__builtin_ctz((unsigned int)m);
+            *out_offset = (size_t)(ptr - bytes) + 96 + (size_t)bc_core_ctz_u32((uint32_t)(unsigned int)m);
             return true;
         }
         ptr += 128;
@@ -130,7 +130,7 @@ __attribute__((target("avx2"))) static bool bc_core_find_byte_avx2(const void* d
         __m256i v = _mm256_cmpeq_epi8(_mm256_loadu_si256((const __m256i*)ptr), target_vec);
         int mask = _mm256_movemask_epi8(v);
         if (mask != 0) {
-            *out_offset = (size_t)(ptr - bytes) + (size_t)__builtin_ctz((unsigned int)mask);
+            *out_offset = (size_t)(ptr - bytes) + (size_t)bc_core_ctz_u32((uint32_t)(unsigned int)mask);
             return true;
         }
         ptr += 32;
@@ -188,7 +188,7 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_find_pattern_avx
             __mmask64 mask;
             mask = m0;
             while (mask != 0) {
-                size_t bit = (size_t)__builtin_ctzll(mask);
+                size_t bit = (size_t)bc_core_ctz_u64((uint64_t)mask);
                 size_t candidate = offset + 0 + bit;
                 if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
                     return true;
@@ -197,7 +197,7 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_find_pattern_avx
             }
             mask = m1;
             while (mask != 0) {
-                size_t bit = (size_t)__builtin_ctzll(mask);
+                size_t bit = (size_t)bc_core_ctz_u64((uint64_t)mask);
                 size_t candidate = offset + 64 + bit;
                 if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
                     return true;
@@ -206,7 +206,7 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_find_pattern_avx
             }
             mask = m2;
             while (mask != 0) {
-                size_t bit = (size_t)__builtin_ctzll(mask);
+                size_t bit = (size_t)bc_core_ctz_u64((uint64_t)mask);
                 size_t candidate = offset + 128 + bit;
                 if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
                     return true;
@@ -215,7 +215,7 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_find_pattern_avx
             }
             mask = m3;
             while (mask != 0) {
-                size_t bit = (size_t)__builtin_ctzll(mask);
+                size_t bit = (size_t)bc_core_ctz_u64((uint64_t)mask);
                 size_t candidate = offset + 192 + bit;
                 if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
                     return true;
@@ -232,7 +232,7 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_find_pattern_avx
         __mmask64 mask = _mm512_cmpeq_epi8_mask(fc, first_vec) & _mm512_cmpeq_epi8_mask(lc, last_vec);
 
         while (mask != 0) {
-            size_t bit = (size_t)__builtin_ctzll(mask);
+            size_t bit = (size_t)bc_core_ctz_u64((uint64_t)mask);
             size_t candidate = offset + bit;
             if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
                 return true;
@@ -294,7 +294,7 @@ __attribute__((target("avx2"))) static bool bc_core_find_pattern_avx2(const void
             unsigned int mask;
             mask = (unsigned int)_mm256_movemask_epi8(m0);
             while (mask != 0) {
-                int bit = __builtin_ctz(mask);
+                int bit = bc_core_ctz_u32((uint32_t)mask);
                 size_t candidate = offset + 0 + (size_t)bit;
                 if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
                     return true;
@@ -303,7 +303,7 @@ __attribute__((target("avx2"))) static bool bc_core_find_pattern_avx2(const void
             }
             mask = (unsigned int)_mm256_movemask_epi8(m1);
             while (mask != 0) {
-                int bit = __builtin_ctz(mask);
+                int bit = bc_core_ctz_u32((uint32_t)mask);
                 size_t candidate = offset + 32 + (size_t)bit;
                 if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
                     return true;
@@ -312,7 +312,7 @@ __attribute__((target("avx2"))) static bool bc_core_find_pattern_avx2(const void
             }
             mask = (unsigned int)_mm256_movemask_epi8(m2);
             while (mask != 0) {
-                int bit = __builtin_ctz(mask);
+                int bit = bc_core_ctz_u32((uint32_t)mask);
                 size_t candidate = offset + 64 + (size_t)bit;
                 if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
                     return true;
@@ -321,7 +321,7 @@ __attribute__((target("avx2"))) static bool bc_core_find_pattern_avx2(const void
             }
             mask = (unsigned int)_mm256_movemask_epi8(m3);
             while (mask != 0) {
-                int bit = __builtin_ctz(mask);
+                int bit = bc_core_ctz_u32((uint32_t)mask);
                 size_t candidate = offset + 96 + (size_t)bit;
                 if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
                     return true;
@@ -339,7 +339,7 @@ __attribute__((target("avx2"))) static bool bc_core_find_pattern_avx2(const void
             (unsigned int)_mm256_movemask_epi8(_mm256_and_si256(_mm256_cmpeq_epi8(fc, first_vec), _mm256_cmpeq_epi8(lc, last_vec)));
 
         while (mask != 0) {
-            int bit = __builtin_ctz(mask);
+            int bit = bc_core_ctz_u32((uint32_t)mask);
             size_t candidate = offset + (size_t)bit;
             if (verify_pattern_candidate(hay, needle, pattern_len, candidate, out_offset)) {
                 return true;
@@ -395,21 +395,21 @@ __attribute__((target("avx2"))) static bool bc_core_find_last_byte_avx2(const vo
             int m;
             m = _mm256_movemask_epi8(v3);
             if (m) {
-                *out_offset = position + 96 + (size_t)(31 - __builtin_clz((unsigned int)m));
+                *out_offset = position + 96 + (size_t)(31 - bc_core_clz_u32((uint32_t)(unsigned int)m));
                 return true;
             }
             m = _mm256_movemask_epi8(v2);
             if (m) {
-                *out_offset = position + 64 + (size_t)(31 - __builtin_clz((unsigned int)m));
+                *out_offset = position + 64 + (size_t)(31 - bc_core_clz_u32((uint32_t)(unsigned int)m));
                 return true;
             }
             m = _mm256_movemask_epi8(v1);
             if (m) {
-                *out_offset = position + 32 + (size_t)(31 - __builtin_clz((unsigned int)m));
+                *out_offset = position + 32 + (size_t)(31 - bc_core_clz_u32((uint32_t)(unsigned int)m));
                 return true;
             }
             m = _mm256_movemask_epi8(v0);
-            *out_offset = position + 0 + (size_t)(31 - __builtin_clz((unsigned int)m));
+            *out_offset = position + 0 + (size_t)(31 - bc_core_clz_u32((uint32_t)(unsigned int)m));
             return true;
         }
     }
@@ -419,7 +419,7 @@ __attribute__((target("avx2"))) static bool bc_core_find_last_byte_avx2(const vo
         __m256i v = _mm256_cmpeq_epi8(_mm256_loadu_si256((const __m256i*)(bytes + position)), target_vec);
         int mask = _mm256_movemask_epi8(v);
         if (mask != 0) {
-            *out_offset = position + (size_t)(31 - __builtin_clz((unsigned int)mask));
+            *out_offset = position + (size_t)(31 - bc_core_clz_u32((uint32_t)(unsigned int)mask));
             return true;
         }
     }
@@ -484,7 +484,7 @@ __attribute__((target("avx2"))) static bool bc_core_find_any_byte_avx2(const voi
         __m256i is_nonzero = _mm256_cmpeq_epi8(combined, zero);
         int mask = ~_mm256_movemask_epi8(is_nonzero);
         if (mask != 0) {
-            *out_offset = (size_t)(ptr - bytes) + (size_t)__builtin_ctz((unsigned int)mask);
+            *out_offset = (size_t)(ptr - bytes) + (size_t)bc_core_ctz_u32((uint32_t)(unsigned int)mask);
             return true;
         }
         ptr += 32;
@@ -602,7 +602,7 @@ __attribute__((target("avx2"))) static bool bc_core_find_byte_in_mask_avx2(const
         __m256i is_nonzero = _mm256_cmpeq_epi8(combined, zero);
         int match_mask = ~_mm256_movemask_epi8(is_nonzero);
         if (match_mask != 0) {
-            *out_offset = (size_t)(ptr - bytes) + (size_t)__builtin_ctz((unsigned int)match_mask);
+            *out_offset = (size_t)(ptr - bytes) + (size_t)bc_core_ctz_u32((uint32_t)(unsigned int)match_mask);
             return true;
         }
         ptr += 32;
@@ -656,7 +656,7 @@ __attribute__((target("avx2"))) static bool bc_core_find_byte_not_in_mask_avx2(c
         __m256i is_zero = _mm256_cmpeq_epi8(combined, zero);
         int miss_mask = _mm256_movemask_epi8(is_zero);
         if (miss_mask != 0) {
-            *out_offset = (size_t)(ptr - bytes) + (size_t)__builtin_ctz((unsigned int)miss_mask);
+            *out_offset = (size_t)(ptr - bytes) + (size_t)bc_core_ctz_u32((uint32_t)(unsigned int)miss_mask);
             return true;
         }
         ptr += 32;

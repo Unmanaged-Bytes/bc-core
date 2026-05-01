@@ -86,7 +86,7 @@ __attribute__((target("avx2"))) static bool bc_core_compare_avx2(const void* a, 
         unsigned int movemask_result = (unsigned int)_mm256_movemask_epi8(comparison_result);
         if (movemask_result != 0xFFFFFFFFu) {
             unsigned int inverted_mask = ~movemask_result;
-            int first_different_byte_position = __builtin_ctz(inverted_mask);
+            int first_different_byte_position = bc_core_ctz_u32((uint32_t)inverted_mask);
             size_t absolute_position = offset + (size_t)first_different_byte_position;
             *out_result = pointer_a[absolute_position] < pointer_b[absolute_position] ? -1 : 1;
             return true;

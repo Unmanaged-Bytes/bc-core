@@ -3,6 +3,8 @@
 #ifndef BC_CORE_SIMD_SCAN_INTERNAL_H
 #define BC_CORE_SIMD_SCAN_INTERNAL_H
 
+#include "../public/bc_core_math.h"
+
 #include <immintrin.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -32,18 +34,18 @@ __attribute__((target("avx512f,avx512bw"))) static inline bool bc_core_simd_scan
 
         if ((m0 | m1 | m2 | m3) != 0) {
             if (m0 != 0) {
-                *out_first_diff_offset = offset + (size_t)__builtin_ctzll(m0);
+                *out_first_diff_offset = offset + (size_t)bc_core_ctz_u64((uint64_t)m0);
                 return true;
             }
             if (m1 != 0) {
-                *out_first_diff_offset = offset + 64 + (size_t)__builtin_ctzll(m1);
+                *out_first_diff_offset = offset + 64 + (size_t)bc_core_ctz_u64((uint64_t)m1);
                 return true;
             }
             if (m2 != 0) {
-                *out_first_diff_offset = offset + 128 + (size_t)__builtin_ctzll(m2);
+                *out_first_diff_offset = offset + 128 + (size_t)bc_core_ctz_u64((uint64_t)m2);
                 return true;
             }
-            *out_first_diff_offset = offset + 192 + (size_t)__builtin_ctzll(m3);
+            *out_first_diff_offset = offset + 192 + (size_t)bc_core_ctz_u64((uint64_t)m3);
             return true;
         }
         offset += 256;
@@ -54,7 +56,7 @@ __attribute__((target("avx512f,avx512bw"))) static inline bool bc_core_simd_scan
         __m512i chunk_b = _mm512_loadu_si512((const __m512i*)(pointer_b + offset));
         __mmask64 mismatch = _mm512_cmpneq_epi8_mask(chunk_a, chunk_b);
         if (mismatch != 0) {
-            *out_first_diff_offset = offset + (size_t)__builtin_ctzll(mismatch);
+            *out_first_diff_offset = offset + (size_t)bc_core_ctz_u64((uint64_t)mismatch);
             return true;
         }
         offset += 64;
@@ -67,7 +69,7 @@ __attribute__((target("avx512f,avx512bw"))) static inline bool bc_core_simd_scan
         __m512i chunk_b = _mm512_maskz_loadu_epi8(mask, pointer_b + offset);
         __mmask64 mismatch = _mm512_mask_cmpneq_epi8_mask(mask, chunk_a, chunk_b);
         if (mismatch != 0) {
-            *out_first_diff_offset = offset + (size_t)__builtin_ctzll(mismatch);
+            *out_first_diff_offset = offset + (size_t)bc_core_ctz_u64((uint64_t)mismatch);
             return true;
         }
     }

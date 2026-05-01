@@ -43,9 +43,21 @@ static inline void bc_core_memcpy(void* dst, const void* src, size_t len)
 }
 
 /* Undefined when value == 0; caller must ensure non-zero. */
+static inline int bc_core_clz_u32(uint32_t value)
+{
+    return __builtin_clz((unsigned int)value);
+}
+
+/* Undefined when value == 0; caller must ensure non-zero. */
 static inline int bc_core_clz_u64(uint64_t value)
 {
     return __builtin_clzll((unsigned long long)value);
+}
+
+/* Undefined when value == 0; caller must ensure non-zero. */
+static inline int bc_core_ctz_u32(uint32_t value)
+{
+    return __builtin_ctz((unsigned int)value);
 }
 
 /* Undefined when value == 0; caller must ensure non-zero. */
