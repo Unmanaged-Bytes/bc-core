@@ -42,6 +42,11 @@ static inline void bc_core_memcpy(void* dst, const void* src, size_t len)
     __builtin_memcpy(dst, src, len);
 }
 
+static inline int bc_core_memcmp(const void* a, const void* b, size_t len)
+{
+    return __builtin_memcmp(a, b, len);
+}
+
 /* Undefined when value == 0; caller must ensure non-zero. */
 static inline int bc_core_clz_u32(uint32_t value)
 {
