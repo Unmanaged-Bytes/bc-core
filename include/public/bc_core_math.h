@@ -37,6 +37,23 @@ static inline void bc_core_store_u64_unaligned(void* dst, uint64_t value)
     __builtin_memcpy(dst, &value, sizeof(value));
 }
 
+static inline void bc_core_memcpy(void* dst, const void* src, size_t len)
+{
+    __builtin_memcpy(dst, src, len);
+}
+
+/* Undefined when value == 0; caller must ensure non-zero. */
+static inline int bc_core_clz_u64(uint64_t value)
+{
+    return __builtin_clzll((unsigned long long)value);
+}
+
+/* Undefined when value == 0; caller must ensure non-zero. */
+static inline int bc_core_ctz_u64(uint64_t value)
+{
+    return __builtin_ctzll((unsigned long long)value);
+}
+
 static inline bool bc_core_safe_multiply(size_t a, size_t b, size_t* out_result)
 {
     return !__builtin_mul_overflow(a, b, out_result);

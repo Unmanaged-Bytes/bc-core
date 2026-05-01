@@ -13,6 +13,8 @@
 #define bc_core_prefetch_for_read(addr) __builtin_prefetch((addr), 0, 3)
 #define bc_core_prefetch_for_write(addr) __builtin_prefetch((addr), 1, 3)
 #define bc_core_spin_pause() __asm__ __volatile__("pause" ::: "memory")
+#define BC_CORE_LIKELY(expr) __builtin_expect(!!(expr), 1)
+#define BC_CORE_UNLIKELY(expr) __builtin_expect(!!(expr), 0)
 
 /* ===== Cache-tier buffer budgets =====
    Compile-time conservative sizing for stack/heap buffers.
