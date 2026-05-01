@@ -12,6 +12,12 @@
 #define BC_CACHE_LINE_ALIGNED BC_ALIGN(BC_CACHE_LINE_SIZE)
 #define bc_core_prefetch_for_read(addr) __builtin_prefetch((addr), 0, 3)
 #define bc_core_prefetch_for_write(addr) __builtin_prefetch((addr), 1, 3)
+/* locality=1: keep in L3 only, evict from L1/L2 quickly. For data touched once
+ * but possibly re-read after a long gap (CRC over multi-MiB streams). */
+#define bc_core_prefetch_low_locality(addr) __builtin_prefetch((addr), 0, 1)
+/* locality=0: non-temporal, do not pollute any cache level. For one-shot
+ * streaming reads (hashmap iteration over cold metadata). */
+#define bc_core_prefetch_streaming(addr) __builtin_prefetch((addr), 0, 0)
 #define bc_core_spin_pause() __asm__ __volatile__("pause" ::: "memory")
 #define BC_CORE_LIKELY(expr) __builtin_expect(!!(expr), 1)
 #define BC_CORE_UNLIKELY(expr) __builtin_expect(!!(expr), 0)

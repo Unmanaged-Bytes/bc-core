@@ -87,9 +87,9 @@ __attribute__((target("sse4.2,pclmul"))) static bool bc_core_crc32c_pclmul(uint3
 
     while (len >= 3072) {
         if (len >= 6144) {
-            __builtin_prefetch(bytes + position + 3072, 0, 1);
-            __builtin_prefetch(bytes + position + 3072 + 1024, 0, 1);
-            __builtin_prefetch(bytes + position + 3072 + 2048, 0, 1);
+            bc_core_prefetch_low_locality(bytes + position + 3072);
+            bc_core_prefetch_low_locality(bytes + position + 3072 + 1024);
+            bc_core_prefetch_low_locality(bytes + position + 3072 + 2048);
         }
         for (size_t iteration = 0; iteration < 128; iteration += 4) {
             uint64_t c00, c01, c02, c03;

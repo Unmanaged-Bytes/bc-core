@@ -66,6 +66,16 @@ static inline int bc_core_ctz_u64(uint64_t value)
     return __builtin_ctzll((unsigned long long)value);
 }
 
+static inline int bc_core_popcount_u32(uint32_t value)
+{
+    return __builtin_popcount((unsigned int)value);
+}
+
+static inline int bc_core_popcount_u64(uint64_t value)
+{
+    return __builtin_popcountll((unsigned long long)value);
+}
+
 static inline bool bc_core_safe_multiply(size_t a, size_t b, size_t* out_result)
 {
     return !__builtin_mul_overflow(a, b, out_result);

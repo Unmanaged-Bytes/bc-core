@@ -31,17 +31,17 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_count_byte_avx51
         __mmask64 m1 = _mm512_cmpeq_epi8_mask(c1, target_vec);
         __mmask64 m2 = _mm512_cmpeq_epi8_mask(c2, target_vec);
         __mmask64 m3 = _mm512_cmpeq_epi8_mask(c3, target_vec);
-        count += (size_t)__builtin_popcountll(m0);
-        count += (size_t)__builtin_popcountll(m1);
-        count += (size_t)__builtin_popcountll(m2);
-        count += (size_t)__builtin_popcountll(m3);
+        count += (size_t)bc_core_popcount_u64(m0);
+        count += (size_t)bc_core_popcount_u64(m1);
+        count += (size_t)bc_core_popcount_u64(m2);
+        count += (size_t)bc_core_popcount_u64(m3);
         ptr += 256;
     }
 
     while (ptr + 64 <= end) {
         __m512i v = _mm512_loadu_si512((const __m512i*)ptr);
         __mmask64 mask = _mm512_cmpeq_epi8_mask(v, target_vec);
-        count += (size_t)__builtin_popcountll(mask);
+        count += (size_t)bc_core_popcount_u64(mask);
         ptr += 64;
     }
 
@@ -50,7 +50,7 @@ __attribute__((target("avx512f,avx512bw"))) static bool bc_core_count_byte_avx51
         __mmask64 load_mask = (1ULL << tail) - 1ULL;
         __m512i v = _mm512_maskz_loadu_epi8(load_mask, ptr);
         __mmask64 mask = _mm512_mask_cmpeq_epi8_mask(load_mask, v, target_vec);
-        count += (size_t)__builtin_popcountll(mask);
+        count += (size_t)bc_core_popcount_u64(mask);
     }
 
     *out_count = count;
@@ -107,7 +107,7 @@ __attribute__((target("avx2"))) static bool bc_core_count_byte_avx2(const void* 
 
     while (ptr + 32 <= end) {
         __m256i v = _mm256_cmpeq_epi8(_mm256_loadu_si256((const __m256i*)ptr), target_vec);
-        count += (size_t)__builtin_popcount((unsigned int)_mm256_movemask_epi8(v));
+        count += (size_t)bc_core_popcount_u32((unsigned int)_mm256_movemask_epi8(v));
         ptr += 32;
     }
 
@@ -178,7 +178,7 @@ __attribute__((target("avx2"))) static bool bc_core_count_matching_avx2(const vo
             __m256i combined = _mm256_or_si256(match1, match2);
             __m256i is_nonzero = _mm256_cmpeq_epi8(combined, zero);
             int mask = ~_mm256_movemask_epi8(is_nonzero);
-            count += (size_t)__builtin_popcount((unsigned int)mask);
+            count += (size_t)bc_core_popcount_u32((unsigned int)mask);
         }
         ptr += 128;
     }
@@ -192,7 +192,7 @@ __attribute__((target("avx2"))) static bool bc_core_count_matching_avx2(const vo
         __m256i combined = _mm256_or_si256(match1, match2);
         __m256i is_nonzero = _mm256_cmpeq_epi8(combined, zero);
         int mask = ~_mm256_movemask_epi8(is_nonzero);
-        count += (size_t)__builtin_popcount((unsigned int)mask);
+        count += (size_t)bc_core_popcount_u32((unsigned int)mask);
         ptr += 32;
     }
 
@@ -433,7 +433,7 @@ __attribute__((target("avx2"))) static bool bc_core_count_words_avx2(const void*
         unsigned int non_ws_mask = ~ws_mask;
         unsigned int prev_ws = (ws_mask << 1) | carry;
         unsigned int word_starts = non_ws_mask & prev_ws;
-        count += (size_t)__builtin_popcount(word_starts);
+        count += (size_t)bc_core_popcount_u32(word_starts);
         carry = (ws_mask >> 31) & 1;
         ptr += 32;
     }
@@ -517,7 +517,7 @@ __attribute__((target("avx2"))) static bool bc_core_count_words_ascii_avx2(const
         unsigned int non_ws_mask = ~ws_mask;
         unsigned int prev_ws = (ws_mask << 1) | carry;
         unsigned int word_starts = non_ws_mask & prev_ws;
-        count += (size_t)__builtin_popcount(word_starts);
+        count += (size_t)bc_core_popcount_u32(word_starts);
         carry = (ws_mask >> 31) & 1;
         ptr += 32;
     }
