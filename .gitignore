@@ -41,3 +41,9 @@ debian/tmp/
 
 reports/
 .bc-validate-status
+
+# Session docs (per bc-tool-template.md)
+STUDY*.md
+docs/STUDY*.md
+PLAN*.md
+docs/PLAN*.md
