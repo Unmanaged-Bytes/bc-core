@@ -33,17 +33,6 @@ static size_t read_all(const char* path, char* buffer, size_t capacity)
     return length;
 }
 
-static void test_writer_init_bad_args(void** state)
-{
-    BC_UNUSED(state);
-    bc_core_writer_t writer;
-    char buffer[64];
-
-    assert_false(bc_core_writer_init(&writer, -1, buffer, sizeof(buffer)));
-    assert_false(bc_core_writer_init(&writer, 1, NULL, sizeof(buffer)));
-    assert_false(bc_core_writer_init(&writer, 1, buffer, 0));
-}
-
 static void test_writer_write_bytes_small(void** state)
 {
     BC_UNUSED(state);
@@ -224,7 +213,6 @@ static void test_writer_empty_write(void** state)
 int main(void)
 {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_writer_init_bad_args),
         cmocka_unit_test(test_writer_write_bytes_small),
         cmocka_unit_test(test_writer_write_bytes_overflow_chain),
         cmocka_unit_test(test_writer_write_bytes_bypass_buffer),

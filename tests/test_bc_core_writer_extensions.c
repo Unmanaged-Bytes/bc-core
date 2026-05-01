@@ -53,27 +53,6 @@ static void test_init_buffer_only_sets_negative_fd(void** state)
     assert_int_equal(writer.capacity, sizeof(buffer));
 }
 
-static void test_init_buffer_only_rejects_null_buffer(void** state)
-{
-    BC_UNUSED(state);
-
-    bc_core_writer_t writer;
-    bool success = bc_core_writer_init_buffer_only(&writer, NULL, 64);
-
-    assert_false(success);
-}
-
-static void test_init_buffer_only_rejects_zero_capacity(void** state)
-{
-    BC_UNUSED(state);
-
-    bc_core_writer_t writer;
-    char buffer[64];
-    bool success = bc_core_writer_init_buffer_only(&writer, buffer, 0);
-
-    assert_false(success);
-}
-
 static void test_buffer_only_accumulates_writes(void** state)
 {
     BC_UNUSED(state);
@@ -142,21 +121,6 @@ static void test_buffer_only_write_char_overflow(void** state)
     assert_true(bc_core_writer_has_error(&writer));
 }
 
-static void test_buffer_data_rejects_null(void** state)
-{
-    BC_UNUSED(state);
-
-    bc_core_writer_t writer;
-    char buffer[8];
-    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
-
-    size_t length = 0;
-    assert_false(bc_core_writer_buffer_data(&writer, NULL, &length));
-
-    const char* data = NULL;
-    assert_false(bc_core_writer_buffer_data(&writer, &data, NULL));
-}
-
 static void test_write_error_description_round_trip(void** state)
 {
     BC_UNUSED(state);
@@ -212,29 +176,6 @@ static void test_write_error_description_unknown_with_fd_writer(void** state)
     assert_true(bc_core_writer_init_standard_error(&writer, buffer, sizeof(buffer)));
     assert_false(bc_core_writer_write_error_description(&writer, (bc_core_error_code_t)9999));
     assert_true(bc_core_writer_has_error(&writer));
-}
-
-static void test_init_rejects_negative_fd(void** state)
-{
-    BC_UNUSED(state);
-    bc_core_writer_t writer;
-    char buffer[16];
-    assert_false(bc_core_writer_init(&writer, -1, buffer, sizeof(buffer)));
-}
-
-static void test_init_rejects_null_buffer(void** state)
-{
-    BC_UNUSED(state);
-    bc_core_writer_t writer;
-    assert_false(bc_core_writer_init(&writer, 1, NULL, 64));
-}
-
-static void test_init_rejects_zero_capacity(void** state)
-{
-    BC_UNUSED(state);
-    bc_core_writer_t writer;
-    char buffer[16];
-    assert_false(bc_core_writer_init(&writer, 1, buffer, 0));
 }
 
 static void test_flush_after_error_latched_returns_false(void** state)
@@ -491,20 +432,14 @@ int main(void)
         cmocka_unit_test(test_init_standard_error_sets_stderr_fd),
         cmocka_unit_test(test_init_standard_output_sets_stdout_fd),
         cmocka_unit_test(test_init_buffer_only_sets_negative_fd),
-        cmocka_unit_test(test_init_buffer_only_rejects_null_buffer),
-        cmocka_unit_test(test_init_buffer_only_rejects_zero_capacity),
         cmocka_unit_test(test_buffer_only_accumulates_writes),
         cmocka_unit_test(test_buffer_only_flush_is_noop),
         cmocka_unit_test(test_buffer_only_overflow_latches_error),
         cmocka_unit_test(test_buffer_only_write_char_overflow),
-        cmocka_unit_test(test_buffer_data_rejects_null),
         cmocka_unit_test(test_write_error_description_round_trip),
         cmocka_unit_test(test_write_error_description_unknown_code),
         cmocka_unit_test(test_write_error_description_after_error_latched),
         cmocka_unit_test(test_write_error_description_unknown_with_fd_writer),
-        cmocka_unit_test(test_init_rejects_negative_fd),
-        cmocka_unit_test(test_init_rejects_null_buffer),
-        cmocka_unit_test(test_init_rejects_zero_capacity),
         cmocka_unit_test(test_flush_after_error_latched_returns_false),
         cmocka_unit_test(test_write_bytes_zero_length_is_noop),
         cmocka_unit_test(test_write_bytes_after_error_latched),

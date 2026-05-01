@@ -33,17 +33,6 @@ static int open_temp_with_content(const void* data, size_t length)
     return fd;
 }
 
-static void test_reader_init_bad_args(void** state)
-{
-    BC_UNUSED(state);
-    bc_core_reader_t reader;
-    char buffer[64];
-
-    assert_false(bc_core_reader_init(&reader, -1, buffer, sizeof(buffer)));
-    assert_false(bc_core_reader_init(&reader, 0, NULL, sizeof(buffer)));
-    assert_false(bc_core_reader_init(&reader, 0, buffer, 0));
-}
-
 static void test_reader_read_bytes(void** state)
 {
     BC_UNUSED(state);
@@ -415,7 +404,6 @@ static void test_reader_read_line_eof_with_residual(void** state)
 int main(void)
 {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_reader_init_bad_args),
         cmocka_unit_test(test_reader_read_bytes),
         cmocka_unit_test(test_reader_read_exact_ok),
         cmocka_unit_test(test_reader_read_exact_eof),

@@ -88,16 +88,6 @@ static void test_describe_buffer_too_small(void** state)
     assert_false(success);
 }
 
-static void test_describe_buffer_null(void** state)
-{
-    BC_UNUSED(state);
-
-    size_t length = 0;
-    bool success = bc_core_error_describe(BC_CORE_ERROR_NONE, NULL, 64, &length);
-
-    assert_false(success);
-}
-
 static void test_describe_capacity_zero(void** state)
 {
     BC_UNUSED(state);
@@ -105,16 +95,6 @@ static void test_describe_capacity_zero(void** state)
     char buffer[1];
     size_t length = 0;
     bool success = bc_core_error_describe(BC_CORE_ERROR_NONE, buffer, 0, &length);
-
-    assert_false(success);
-}
-
-static void test_describe_out_length_null(void** state)
-{
-    BC_UNUSED(state);
-
-    char buffer[64];
-    bool success = bc_core_error_describe(BC_CORE_ERROR_NONE, buffer, sizeof(buffer), NULL);
 
     assert_false(success);
 }
@@ -171,16 +151,6 @@ static void test_name_unknown_code(void** state)
     const char* name = NULL;
     size_t name_length = 0;
     bool success = bc_core_error_name((bc_core_error_code_t)9999, &name, &name_length);
-
-    assert_false(success);
-}
-
-static void test_name_out_null(void** state)
-{
-    BC_UNUSED(state);
-
-    size_t name_length = 0;
-    bool success = bc_core_error_name(BC_CORE_ERROR_NONE, NULL, &name_length);
 
     assert_false(success);
 }
@@ -317,15 +287,6 @@ static void test_from_system_errno_unknown(void** state)
     assert_int_equal(code, BC_CORE_ERROR_INTERNAL);
 }
 
-static void test_from_system_errno_out_null(void** state)
-{
-    BC_UNUSED(state);
-
-    bool success = bc_core_error_from_system_errno(EINVAL, NULL);
-
-    assert_false(success);
-}
-
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -334,13 +295,10 @@ int main(void)
         cmocka_unit_test(test_describe_all_known_codes),
         cmocka_unit_test(test_describe_unknown_code),
         cmocka_unit_test(test_describe_buffer_too_small),
-        cmocka_unit_test(test_describe_buffer_null),
         cmocka_unit_test(test_describe_capacity_zero),
-        cmocka_unit_test(test_describe_out_length_null),
         cmocka_unit_test(test_name_all_known_codes),
         cmocka_unit_test(test_name_specific_code),
         cmocka_unit_test(test_name_unknown_code),
-        cmocka_unit_test(test_name_out_null),
         cmocka_unit_test(test_from_system_errno_zero),
         cmocka_unit_test(test_from_system_errno_einval),
         cmocka_unit_test(test_from_system_errno_enoent),
@@ -353,7 +311,6 @@ int main(void)
         cmocka_unit_test(test_from_system_errno_eoverflow),
         cmocka_unit_test(test_from_system_errno_enosys),
         cmocka_unit_test(test_from_system_errno_unknown),
-        cmocka_unit_test(test_from_system_errno_out_null),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

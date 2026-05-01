@@ -31,9 +31,6 @@ static bool raw_write_all(int fd, const void* data, size_t len)
 
 bool bc_core_writer_init(bc_core_writer_t* writer, int fd, char* buffer, size_t capacity)
 {
-    if (fd < 0 || buffer == NULL || capacity == 0) {
-        return false;
-    }
     writer->fd = fd;
     writer->error_latched = 0;
     writer->buffer = buffer;
@@ -54,9 +51,6 @@ bool bc_core_writer_init_standard_output(bc_core_writer_t* writer, char* buffer,
 
 bool bc_core_writer_init_buffer_only(bc_core_writer_t* writer, char* buffer, size_t capacity)
 {
-    if (buffer == NULL || capacity == 0) {
-        return false;
-    }
     writer->fd = -1;
     writer->error_latched = 0;
     writer->buffer = buffer;
@@ -72,9 +66,6 @@ bool bc_core_writer_has_error(const bc_core_writer_t* writer)
 
 bool bc_core_writer_buffer_data(const bc_core_writer_t* writer, const char** out_data, size_t* out_length)
 {
-    if (out_data == NULL || out_length == NULL) {
-        return false;
-    }
     *out_data = writer->buffer;
     *out_length = writer->position;
     return true;

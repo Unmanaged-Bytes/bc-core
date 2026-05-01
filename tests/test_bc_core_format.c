@@ -339,20 +339,6 @@ static void test_fmt_unicode_codepoint_escape_buffer_too_small_supplementary(voi
     assert_false(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x1F600U, &length));
 }
 
-static void test_fmt_unicode_codepoint_escape_null_buffer(void** state)
-{
-    BC_UNUSED(state);
-    size_t length = 0;
-    assert_false(bc_core_format_unicode_codepoint_escape(NULL, 16, 0x0041U, &length));
-}
-
-static void test_fmt_unicode_codepoint_escape_null_out_length(void** state)
-{
-    BC_UNUSED(state);
-    char buffer[16];
-    assert_false(bc_core_format_unicode_codepoint_escape(buffer, sizeof(buffer), 0x0041U, NULL));
-}
-
 static void test_format_double_negative_zero(void** state)
 {
     BC_UNUSED(state);
@@ -642,8 +628,6 @@ int main(void)
         cmocka_unit_test(test_fmt_unicode_codepoint_escape_rejects_low_surrogate),
         cmocka_unit_test(test_fmt_unicode_codepoint_escape_buffer_too_small_bmp),
         cmocka_unit_test(test_fmt_unicode_codepoint_escape_buffer_too_small_supplementary),
-        cmocka_unit_test(test_fmt_unicode_codepoint_escape_null_buffer),
-        cmocka_unit_test(test_fmt_unicode_codepoint_escape_null_out_length),
         cmocka_unit_test(test_format_double_negative_zero),
         cmocka_unit_test(test_format_bytes_human_max_uint64),
         cmocka_unit_test(test_format_uint64_dec_capacity_zero),

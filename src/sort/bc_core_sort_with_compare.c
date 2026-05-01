@@ -159,17 +159,8 @@ static void bc_core_sort_introsort(unsigned char* base, size_t count, size_t ele
 
 bool bc_core_sort_with_compare(void* base, size_t count, size_t element_size, bc_core_sort_less_than_function less_than, void* user_data)
 {
-    if (less_than == NULL) {
-        return false;
-    }
-    if (element_size == 0U) {
-        return false;
-    }
-    if (count <= 1U) {
+    if (count <= 1U || element_size == 0U) {
         return true;
-    }
-    if (base == NULL) {
-        return false;
     }
 
     size_t depth_limit = 2U * bc_core_sort_log2_floor(count);

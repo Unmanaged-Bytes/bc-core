@@ -8,9 +8,6 @@
 
 bool bc_core_reader_init(bc_core_reader_t* reader, int fd, char* buffer, size_t capacity)
 {
-    if (fd < 0 || buffer == NULL || capacity == 0) {
-        return false;
-    }
     reader->fd = fd;
     reader->eof_latched = 0;
     reader->error_latched = 0;

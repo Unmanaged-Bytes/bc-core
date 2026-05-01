@@ -216,18 +216,14 @@ static void test_sort_user_data_passed_through(void** state)
     assert_true(comparison_count > 0);
 }
 
-static void test_sort_rejects_null_compare(void** state)
+static void test_sort_zero_element_size_is_noop(void** state)
 {
     BC_UNUSED(state);
     int32_t array[] = {1, 2, 3};
-    assert_false(bc_core_sort_with_compare(array, 3, sizeof(int32_t), NULL, NULL));
-}
-
-static void test_sort_rejects_zero_element_size(void** state)
-{
-    BC_UNUSED(state);
-    int32_t array[] = {1, 2, 3};
-    assert_false(bc_core_sort_with_compare(array, 3, 0, less_than_int32, NULL));
+    assert_true(bc_core_sort_with_compare(array, 3, 0, less_than_int32, NULL));
+    assert_int_equal(array[0], 1);
+    assert_int_equal(array[1], 2);
+    assert_int_equal(array[2], 3);
 }
 
 static bool less_than_first_byte(const void* left, const void* right, void* user_data)
@@ -594,12 +590,6 @@ static void test_sort_many_duplicates_large(void** state)
     free(array);
 }
 
-static void test_sort_null_base_with_count_many(void** state)
-{
-    BC_UNUSED(state);
-    assert_false(bc_core_sort_with_compare(NULL, 10, sizeof(int32_t), less_than_int32, NULL));
-}
-
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -617,8 +607,7 @@ int main(void)
         cmocka_unit_test(test_sort_uint64),
         cmocka_unit_test(test_sort_struct_by_key),
         cmocka_unit_test(test_sort_user_data_passed_through),
-        cmocka_unit_test(test_sort_rejects_null_compare),
-        cmocka_unit_test(test_sort_rejects_zero_element_size),
+        cmocka_unit_test(test_sort_zero_element_size_is_noop),
         cmocka_unit_test(test_sort_element_size_1),
         cmocka_unit_test(test_sort_element_size_2),
         cmocka_unit_test(test_sort_element_size_3),
@@ -651,7 +640,6 @@ int main(void)
         cmocka_unit_test(test_sort_mmap_buffer),
         cmocka_unit_test(test_sort_pathological_input_triggers_heap_fallback),
         cmocka_unit_test(test_sort_many_duplicates_large),
-        cmocka_unit_test(test_sort_null_base_with_count_many),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

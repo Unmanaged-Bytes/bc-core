@@ -330,9 +330,6 @@ static void write_four_uppercase_hex(char* destination, uint32_t value)
 
 bool bc_core_format_unicode_codepoint_escape(char* buffer, size_t capacity, uint32_t codepoint, size_t* out_length)
 {
-    if (buffer == NULL || out_length == NULL) {
-        return false;
-    }
     if (codepoint > 0x10FFFFU) {
         return false;
     }

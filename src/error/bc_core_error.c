@@ -47,9 +47,6 @@ static const bc_core_error_entry_t* bc_core_error_lookup(bc_core_error_code_t co
 
 bool bc_core_error_describe(bc_core_error_code_t code, char* buffer, size_t capacity, size_t* out_length)
 {
-    if (buffer == NULL || capacity == 0 || out_length == NULL) {
-        return false;
-    }
     const bc_core_error_entry_t* entry = bc_core_error_lookup(code);
     if (entry == NULL) {
         return false;
@@ -64,9 +61,6 @@ bool bc_core_error_describe(bc_core_error_code_t code, char* buffer, size_t capa
 
 bool bc_core_error_name(bc_core_error_code_t code, const char** out_name, size_t* out_name_length)
 {
-    if (out_name == NULL || out_name_length == NULL) {
-        return false;
-    }
     const bc_core_error_entry_t* entry = bc_core_error_lookup(code);
     if (entry == NULL) {
         return false;
@@ -78,9 +72,6 @@ bool bc_core_error_name(bc_core_error_code_t code, const char** out_name, size_t
 
 bool bc_core_error_from_system_errno(int system_errno, bc_core_error_code_t* out_code)
 {
-    if (out_code == NULL) {
-        return false;
-    }
     switch (system_errno) {
     case 0:
         *out_code = BC_CORE_ERROR_NONE;
