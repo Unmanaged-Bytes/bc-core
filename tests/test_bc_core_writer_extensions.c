@@ -410,6 +410,146 @@ static void test_write_cstring_long_runtime_string(void** state)
     assert_memory_equal(data, source, sizeof(source) - 1U);
 }
 
+static void test_padded_unsigned_below_width(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[32];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_unsigned_integer_64_decimal_padded(&writer, 42U, 5U, ' '));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 5);
+    assert_memory_equal(data, "   42", 5);
+}
+
+static void test_padded_unsigned_zero_pad(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[32];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_unsigned_integer_64_decimal_padded(&writer, 42U, 5U, '0'));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 5);
+    assert_memory_equal(data, "00042", 5);
+}
+
+static void test_padded_unsigned_at_width(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[32];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_unsigned_integer_64_decimal_padded(&writer, 12345U, 5U, '0'));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 5);
+    assert_memory_equal(data, "12345", 5);
+}
+
+static void test_padded_unsigned_above_width(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[32];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_unsigned_integer_64_decimal_padded(&writer, 123456U, 5U, '0'));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 6);
+    assert_memory_equal(data, "123456", 6);
+}
+
+static void test_padded_unsigned_zero_value_zero_pad(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[32];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_unsigned_integer_64_decimal_padded(&writer, 0U, 4U, '0'));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 4);
+    assert_memory_equal(data, "0000", 4);
+}
+
+static void test_padded_signed_negative_zero_pad(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[32];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_signed_integer_64_decimal_padded(&writer, -7, 4U, '0'));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 4);
+    assert_memory_equal(data, "-007", 4);
+}
+
+static void test_padded_signed_negative_space_pad(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[32];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_signed_integer_64_decimal_padded(&writer, -7, 4U, ' '));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 4);
+    assert_memory_equal(data, "  -7", 4);
+}
+
+static void test_padded_signed_positive(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[32];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_true(bc_core_writer_write_signed_integer_64_decimal_padded(&writer, 42, 5U, ' '));
+
+    const char* data = NULL;
+    size_t length = 0;
+    assert_true(bc_core_writer_buffer_data(&writer, &data, &length));
+    assert_int_equal(length, 5);
+    assert_memory_equal(data, "   42", 5);
+}
+
+static void test_padded_unsigned_buffer_too_small(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[3];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_unsigned_integer_64_decimal_padded(&writer, 42U, 5U, ' '));
+    assert_true(bc_core_writer_has_error(&writer));
+}
+
+static void test_padded_signed_buffer_too_small(void** state)
+{
+    BC_UNUSED(state);
+    bc_core_writer_t writer;
+    char buffer[2];
+    assert_true(bc_core_writer_init_buffer_only(&writer, buffer, sizeof(buffer)));
+    assert_false(bc_core_writer_write_signed_integer_64_decimal_padded(&writer, -7, 4U, '0'));
+    assert_true(bc_core_writer_has_error(&writer));
+}
+
 static void test_destroy_returns_flush_status(void** state)
 {
     BC_UNUSED(state);
@@ -458,6 +598,16 @@ int main(void)
         cmocka_unit_test(test_write_cstring_after_error_latched),
         cmocka_unit_test(test_write_cstring_overflow_latches_error),
         cmocka_unit_test(test_write_cstring_long_runtime_string),
+        cmocka_unit_test(test_padded_unsigned_below_width),
+        cmocka_unit_test(test_padded_unsigned_zero_pad),
+        cmocka_unit_test(test_padded_unsigned_at_width),
+        cmocka_unit_test(test_padded_unsigned_above_width),
+        cmocka_unit_test(test_padded_unsigned_zero_value_zero_pad),
+        cmocka_unit_test(test_padded_signed_negative_zero_pad),
+        cmocka_unit_test(test_padded_signed_negative_space_pad),
+        cmocka_unit_test(test_padded_signed_positive),
+        cmocka_unit_test(test_padded_unsigned_buffer_too_small),
+        cmocka_unit_test(test_padded_signed_buffer_too_small),
         cmocka_unit_test(test_destroy_returns_flush_status),
     };
 

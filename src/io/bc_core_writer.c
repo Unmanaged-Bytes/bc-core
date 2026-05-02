@@ -182,6 +182,32 @@ bool bc_core_writer_write_unsigned_integer_64_decimal(bc_core_writer_t* writer, 
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
+static bool writer_write_pad_repeat(bc_core_writer_t* writer, char pad_character, size_t count)
+{
+    for (size_t i = 0; i < count; ++i) {
+        if (!bc_core_writer_write_char(writer, pad_character)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool bc_core_writer_write_unsigned_integer_64_decimal_padded(bc_core_writer_t* writer, uint64_t value, size_t minimum_width,
+                                                             char pad_character)
+{
+    char scratch[21];
+    size_t length = 0;
+    (void)bc_core_format_unsigned_integer_64_decimal(scratch, sizeof(scratch), value, &length);
+
+    if (length < minimum_width) {
+        const size_t pad_count = minimum_width - length;
+        if (!writer_write_pad_repeat(writer, pad_character, pad_count)) {
+            return false;
+        }
+    }
+    return bc_core_writer_write_bytes(writer, scratch, length);
+}
+
 bool bc_core_writer_write_unsigned_integer_64_hexadecimal(bc_core_writer_t* writer, uint64_t value)
 {
     char scratch[16];
@@ -206,6 +232,36 @@ bool bc_core_writer_write_signed_integer_64(bc_core_writer_t* writer, int64_t va
     char scratch[22];
     size_t length = 0;
     (void)bc_core_format_signed_integer_64(scratch, sizeof(scratch), value, &length);
+    return bc_core_writer_write_bytes(writer, scratch, length);
+}
+
+bool bc_core_writer_write_signed_integer_64_decimal_padded(bc_core_writer_t* writer, int64_t value, size_t minimum_width,
+                                                           char pad_character)
+{
+    char scratch[22];
+    size_t length = 0;
+    (void)bc_core_format_signed_integer_64(scratch, sizeof(scratch), value, &length);
+
+    if (length >= minimum_width) {
+        return bc_core_writer_write_bytes(writer, scratch, length);
+    }
+
+    const size_t pad_count = minimum_width - length;
+    const bool is_negative = (value < 0);
+
+    if (is_negative && pad_character == '0') {
+        if (!bc_core_writer_write_char(writer, '-')) {
+            return false;
+        }
+        if (!writer_write_pad_repeat(writer, pad_character, pad_count)) {
+            return false;
+        }
+        return bc_core_writer_write_bytes(writer, scratch + 1, length - 1U);
+    }
+
+    if (!writer_write_pad_repeat(writer, pad_character, pad_count)) {
+        return false;
+    }
     return bc_core_writer_write_bytes(writer, scratch, length);
 }
 
