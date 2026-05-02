@@ -40,4 +40,6 @@ bool bc_core_time_parse_iso_8601_utc(const char* text, size_t length, bc_core_ti
 bool bc_core_time_format_utc(char* buffer, size_t capacity, const char* format_pattern, bc_core_time_t time, size_t* out_length);
 bool bc_core_time_parse_utc(const char* text, size_t length, const char* format_pattern, bc_core_time_t* out_time, size_t* out_consumed);
 
+bool bc_core_time_format_local(char* buffer, size_t capacity, const char* format_pattern, bc_core_time_t time, size_t* out_length);
+
 #endif /* BC_CORE_TIME_H */

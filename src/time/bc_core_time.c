@@ -275,3 +275,30 @@ bool bc_core_time_parse_utc(const char* text, size_t length, const char* format_
     *out_consumed = (size_t)(tail - stack_buffer);
     return true;
 }
+
+static bool bc_core_time_to_struct_tm_local(bc_core_time_t time, struct tm* out_struct)
+{
+    const bc_core_time_t normalized = bc_core_time_normalize(time);
+    const time_t epoch_seconds = (time_t)normalized.seconds;
+    if ((int64_t)epoch_seconds != normalized.seconds) {
+        return false;
+    }
+    return localtime_r(&epoch_seconds, out_struct) != NULL;
+}
+
+bool bc_core_time_format_local(char* buffer, size_t capacity, const char* format_pattern, bc_core_time_t time, size_t* out_length)
+{
+    struct tm broken_down;
+    if (!bc_core_time_to_struct_tm_local(time, &broken_down)) {
+        return false;
+    }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+    const size_t written = strftime(buffer, capacity, format_pattern, &broken_down);
+#pragma GCC diagnostic pop
+    if (written == 0) {
+        return false;
+    }
+    *out_length = written;
+    return true;
+}

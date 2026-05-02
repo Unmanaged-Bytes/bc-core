@@ -8,7 +8,9 @@
 #include "bc_core.h"
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 static void test_monotonic_now_returns_increasing_values(void** state)
 {
@@ -412,6 +414,51 @@ static void test_parse_utc_too_long(void** state)
     assert_false(bc_core_time_parse_utc(large_input, sizeof(large_input), "%Y-%m-%d", &parsed, &consumed));
 }
 
+static void force_tz_utc(void)
+{
+    setenv("TZ", "UTC", 1);
+    tzset();
+}
+
+static void test_format_local_known_date(void** state)
+{
+    BC_UNUSED(state);
+    force_tz_utc();
+    char buffer[64];
+    size_t length = 0;
+    bc_core_time_t input = {1700000000, 0};
+    assert_true(bc_core_time_format_local(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", input, &length));
+    assert_int_equal(length, 16);
+    assert_memory_equal(buffer, "2023-11-14 22:13", 16);
+}
+
+static void test_format_local_buffer_too_small(void** state)
+{
+    BC_UNUSED(state);
+    force_tz_utc();
+    char buffer[5];
+    size_t length = 0;
+    bc_core_time_t input = {1700000000, 0};
+    assert_false(bc_core_time_format_local(buffer, sizeof(buffer), "%Y-%m-%d", input, &length));
+}
+
+static void test_format_local_round_trip_with_parse_utc(void** state)
+{
+    BC_UNUSED(state);
+    force_tz_utc();
+    char buffer[64];
+    size_t length = 0;
+    bc_core_time_t input = {1700000000, 0};
+    assert_true(bc_core_time_format_local(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", input, &length));
+    assert_int_equal(length, 19);
+
+    bc_core_time_t parsed = {0, 0};
+    size_t consumed = 0;
+    assert_true(bc_core_time_parse_utc(buffer, length, "%Y-%m-%d %H:%M:%S", &parsed, &consumed));
+    assert_int_equal(consumed, 19);
+    assert_int_equal(parsed.seconds, input.seconds);
+}
+
 int main(void)
 {
     const struct CMUnitTest tests[] = {
@@ -457,6 +504,9 @@ int main(void)
         cmocka_unit_test(test_parse_utc_invalid_input),
         cmocka_unit_test(test_parse_utc_zero_length),
         cmocka_unit_test(test_parse_utc_too_long),
+        cmocka_unit_test(test_format_local_known_date),
+        cmocka_unit_test(test_format_local_buffer_too_small),
+        cmocka_unit_test(test_format_local_round_trip_with_parse_utc),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
