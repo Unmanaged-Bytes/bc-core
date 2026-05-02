@@ -322,6 +322,12 @@ test_bc_core_format = executable('test_bc_core_format',
 )
 test('format', test_bc_core_format)
 
+test_bc_core_time = executable('test_bc_core_time',
+    'test_bc_core_time.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('time', test_bc_core_time)
+
 test_bc_core_writer = executable('test_bc_core_writer',
     'test_bc_core_writer.c',
     dependencies : [bc_core_dep, cmocka_dep],

@@ -12,5 +12,6 @@
 #include "bc_core_memory.h"
 #include "bc_core_parse.h"
 #include "bc_core_sort.h"
+#include "bc_core_time.h"
 
 #endif /* BC_CORE_H */

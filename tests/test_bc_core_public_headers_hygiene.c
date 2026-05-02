@@ -19,7 +19,8 @@ static const char* const public_headers[] = {
     "include/public/bc_core_error.h", "include/public/bc_core_format.h",
     "include/public/bc_core_hash.h",  "include/public/bc_core_io.h",
     "include/public/bc_core_math.h",  "include/public/bc_core_memory.h",
-    "include/public/bc_core_sort.h",  NULL,
+    "include/public/bc_core_sort.h",  "include/public/bc_core_time.h",
+    NULL,
 };
 
 static const char* const forbidden_tokens[] = {

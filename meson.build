@@ -75,6 +75,7 @@ install_headers(
   'include/public/bc_core_parse.h',
   'include/public/bc_core_sort.h',
   'include/public/bc_core_test_wrap.h',
+  'include/public/bc_core_time.h',
   subdir : 'bc',
 )
 
