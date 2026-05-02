@@ -328,6 +328,12 @@ test_bc_core_time = executable('test_bc_core_time',
 )
 test('time', test_bc_core_time)
 
+test_bc_core_glob = executable('test_bc_core_glob',
+    'test_bc_core_glob.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('glob', test_bc_core_glob)
+
 test_bc_core_writer = executable('test_bc_core_writer',
     'test_bc_core_writer.c',
     dependencies : [bc_core_dep, cmocka_dep],
