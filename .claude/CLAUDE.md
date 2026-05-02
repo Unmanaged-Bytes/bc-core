@@ -31,3 +31,16 @@ builds on.
   headers without a vector-ISA include. SIMD intrinsics stay in
   `.c` files only. Enforced by
   `tests/test_bc_core_public_headers_hygiene.c`.
+
+## Position dans le DAG (D063)
+
+bc-core est **la racine** du DAG. Aucune dépendance externe sauf libc.
+Les wrappers `bc_core_*` autorisent `<string.h>` UNIQUEMENT en interne
+ici (`src/memory/*.c` qui implémentent equal/length/copy/zero/fill/find
+via SIMD ou `__builtin_*`).
+
+Tout downstream bc-* (libs et binaires) doit consommer ces primitives
+au lieu de `<string.h>` directement.
+
+Voir `~/workspace/applications/CLAUDE.md` § 7 pour la doctrine D063
+complète.
