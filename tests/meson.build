@@ -79,6 +79,12 @@ test_bc_core_length = executable('test_bc_core_length',
     dependencies : [cmocka_dep, bc_core_dep],
 )
 
+test_bc_core_cstring = executable('test_bc_core_cstring',
+    'test_bc_core_cstring.c',
+    dependencies : [cmocka_dep, bc_core_dep],
+)
+test('cstring', test_bc_core_cstring)
+
 test_bc_core_ascii = executable('test_bc_core_ascii',
     'test_bc_core_ascii.c',
     dependencies : [cmocka_dep, bc_core_dep],

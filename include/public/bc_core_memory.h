@@ -41,6 +41,9 @@ bool bc_core_find_byte_in_mask(const void* data, size_t len, const bc_core_byte_
 bool bc_core_find_byte_not_in_mask(const void* data, size_t len, const bc_core_byte_mask_t* mask, size_t* out_offset);
 bool bc_core_length(const void* data, unsigned char terminator, size_t* out_length);
 
+bool bc_core_cstring_equal(const char* left, const char* right, bool* out_equal);
+bool bc_core_cstring_compare(const char* left, const char* right, int* out_order);
+
 bool bc_core_count_byte(const void* data, size_t len, unsigned char target, size_t* out_count);
 bool bc_core_count_matching(const void* data, size_t len, const unsigned char table[256], size_t* out_count);
 bool bc_core_count_lines(const void* data, size_t len, size_t* out_count);
