@@ -334,6 +334,12 @@ test_bc_core_glob = executable('test_bc_core_glob',
 )
 test('glob', test_bc_core_glob)
 
+test_bc_core_format_extensions = executable('test_bc_core_format_extensions',
+    'test_bc_core_format_extensions.c',
+    dependencies : [bc_core_dep, cmocka_dep],
+)
+test('format_extensions', test_bc_core_format_extensions)
+
 test_bc_core_writer = executable('test_bc_core_writer',
     'test_bc_core_writer.c',
     dependencies : [bc_core_dep, cmocka_dep],
